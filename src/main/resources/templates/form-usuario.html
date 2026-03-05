@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title th:text="${modo == 'editar'} ? 'Editar Usuario' : 'Crear Usuario'">Crear Usuario</title>
+    <link rel="stylesheet" href="/css/estilo.css">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css"
+          rel="stylesheet">
+</head>
+<body class="bg-light">
+
+<nav class="navbar navbar-expand-lg navbar-light bg-white shadow-sm mb-4">
+    <div class="container">
+
+        <a class="navbar-brand fw-bold" href="/">Blog</a>
+
+        <div class="d-flex align-items-center">
+
+            <span class="me-3 d-flex align-items-center">
+
+                <!-- Foto -->
+                <img th:src="${usuarioActual.fotoDataUrl}"
+                     class="rounded-circle me-2"
+                     style="width:35px; height:35px; object-fit:cover;" />
+
+                <!-- Texto -->
+                Hola,
+                <strong class="ms-1"
+                        th:text="${usuarioActual.username}">
+                    Usuario
+                </strong>
+
+            </span>
+
+            <a href="/logout"
+               class="btn btn-outline-dark btn-sm">
+                Logout
+            </a>
+
+        </div>
+
+    </div>
+</nav>
+
+<main class="container">
+    <div class="row justify-content-center">
+        <div class="col-md-6">
+            <div class="card shadow-sm">
+                <div class="card-body p-4">
+
+                    <h3 class="card-title"
+                        th:text="${modo == 'editar'} ? 'Editar Usuario' : 'Crear Usuario'">
+                        Crear Usuario
+                    </h3>
+
+                    <form method="post"
+                          enctype="multipart/form-data"
+                          th:action="${modo == 'editar'} ?
+                                @{/usuarios/{id}/edit(id=${usuario.id})} :
+                                @{/usuarios}">
+
+                        <!-- Username -->
+                        <div class="mb-3">
+                            <label class="form-label small fw-bold">Nombre de Usuario</label>
+                            <input type="text"
+                                   name="username"
+                                   class="form-control"
+                                   placeholder="Usuario"
+                                   required
+                                   th:value="${usuario != null ? usuario.username : ''}">
+                        </div>
+
+                        <!-- Password -->
+                        <div class="mb-3">
+                            <label class="form-label small fw-bold">Contraseña</label>
+                            <input type="password"
+                                   name="password"
+                                   class="form-control"
+                                   th:placeholder="${modo == 'editar'} ?
+                                       'Dejar en blanco para conservar la actual' :
+                                       'Contraseña'"
+                                   th:required="${modo == 'crear'}">
+                        </div>
+
+                        <!-- Rol -->
+                        <div class="mb-3">
+                            <label class="form-label small fw-bold">Rol de Sistema</label>
+
+                            <select name="rol"
+                                    class="form-select"
+                                    required
+                                    th:disabled="${usuarioActual != null && usuario != null && usuarioActual.id == usuario.id}">
+
+                                <option value=""
+                                        th:selected="${usuario == null}"
+                                        disabled>
+                                    Seleccione un rol
+                                </option>
+
+                                <option th:each="r : ${roles}"
+                                        th:value="${r.name()}"
+                                        th:text="${r.name()}"
+                                        th:selected="${usuario != null && usuario.rol == r}">
+                                </option>
+                            </select>
+                        </div>
+
+                        <!-- Foto actual (solo en editar si existe) -->
+                        <div class="mb-3 text-center" th:if="${modo == 'editar'}">
+                            <label class="form-label small fw-bold d-block">Foto actual</label>
+                            <img th:src="${usuario.fotoDataUrl}"
+                                 id="preview"
+                                 class="rounded-circle me-2"
+                                 style="width:120px; height:120px; object-fit:cover;" />
+                        </div>
+
+                        <!-- Subir nueva foto -->
+                        <div class="mb-3">
+                            <label class="form-label small fw-bold">
+                                <span th:text="${modo == 'editar'} ? 'Cambiar Foto (opcional)' : 'Foto de Perfil'"></span>
+                            </label>
+                            <input type="file"
+                                   name="foto"
+                                   class="form-control"
+                                   accept="image/*"
+                                   onchange="mostrarPreview(this)">
+                            <div class="form-text">Formatos permitidos: PNG, JPG, JPEG, WEBP, GIF.</div>
+                        </div>
+
+                        <!-- Botones -->
+                        <div class="d-flex justify-content-between">
+                            <a href="/usuarios"
+                               class="btn btn-dark">
+                                Cancelar
+                            </a>
+
+                            <button type="submit"
+                                    class="btn btn-primary"
+                                    th:text="${modo == 'editar'} ? 'Editar' : 'Crear'">
+                                Crear
+                            </button>
+                        </div>
+
+                    </form>
+
+                </div>
+            </div>
+        </div>
+    </div>
+</main>
+
+<script th:if="${error != null}" th:inline="javascript">
+    alert('[[${error}]]');
+</script>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+    function mostrarPreview(input) {
+        const container = document.getElementById('previewContainer');
+        const preview = document.getElementById('preview');
+
+        if (input.files && input.files[0]) {
+            const reader = new FileReader();
+            reader.onload = e => {
+                preview.src = e.target.result;
+                container.style.display = 'block';
+            };
+            reader.readAsDataURL(input.files[0]);
+        }
+    }
+</script>
+</body>
+</html>

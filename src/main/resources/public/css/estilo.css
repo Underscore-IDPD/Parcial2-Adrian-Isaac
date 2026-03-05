@@ -1,0 +1,73 @@
+.banner-evento {
+    height: 320px;
+    object-fit: cover;
+}
+
+.banner-wrapper{
+    cursor:pointer;
+}
+
+.clickable-banner:hover{
+    filter:brightness(0.85);
+    transition:.2s;
+}
+
+.banner-gradient {
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(
+            to top,
+            rgba(0,0,0,0.75),
+            rgba(0,0,0,0.35),
+            rgba(0,0,0,0)
+    );
+}
+
+.banner-text {
+    position: absolute;
+    bottom: 25px;
+    left: 30px;
+}
+
+.banner-badge {
+    position: absolute;
+    top: 20px;
+    right: 25px;
+}
+
+@media (max-width: 768px) {
+    .banner-evento {
+        height: 220px;
+    }
+}
+
+.card {
+    border: none;
+    border-radius: 12px;
+    transition: transform 0.2s ease-in-out;
+}
+
+.card-body h1 {
+    color: #2c3e50;
+    font-weight: 700;
+}
+
+.card-body p {
+    line-height: 1.8;
+    color: #4a4a4a;
+}
+
+.btn-sm {
+    border-radius: 8px;
+    padding: 5px 15px;
+}
+
+.badge {
+    padding: 0.5em 0.8em;
+    font-weight: 500;
+    transition: all 0.2s;
+}
+
+.badge:hover {
+    background-color: #5b5d5e !important;
+}
