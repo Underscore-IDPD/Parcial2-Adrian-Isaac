@@ -29,6 +29,26 @@
     left: 30px;
 }
 
+.comentario-avatar{
+    width:40px;
+    height:40px;
+    border-radius:50%;
+    object-fit:cover;
+
+    border:2px solid rgba(255,255,255,0.9);
+}
+
+.organizador-avatar{
+    width:60px;
+    height:60px;
+    border-radius:50%;
+    object-fit:cover;
+
+    border:3px solid rgba(255,255,255,0.9);
+
+    box-shadow:0 4px 10px rgba(0,0,0,0.35);
+}
+
 .banner-badge {
     position: absolute;
     top: 20px;

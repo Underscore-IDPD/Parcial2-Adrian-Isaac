@@ -1,6 +1,7 @@
 package controller;
 
 import io.javalin.Javalin;
+import io.javalin.config.JavalinConfig;
 import io.javalin.http.Context;
 import jakarta.persistence.EntityManager;
 import model.*;
@@ -20,12 +21,12 @@ public class ComentarioControlador {
         this.eventoServicio = eventoServicio;
     }
 
-    public void registrarRutas(Javalin app) {
+    public void registrarRutas(JavalinConfig app) {
 
-        app.post("/articulos/{id}/comentarios", this::crearComentario);
-        app.post("/comentarios/{id}/delete", this::eliminarComentario);
-        app.post("/comentarios/{id}/edit", this::modificarComentario);
-        app.post("/comentarios/{id}/modoEdit", this::modoEdit);
+        app.routes.post("/eventos/{id}/comentarios", this::crearComentario);
+        app.routes.post("/comentarios/{id}/delete", this::eliminarComentario);
+        app.routes.post("/comentarios/{id}/edit", this::modificarComentario);
+        app.routes.post("/comentarios/{id}/modoEdit", this::modoEdit);
 
     }
 
@@ -40,15 +41,15 @@ public class ComentarioControlador {
         Long uid = ctx.sessionAttribute("usuarioId");
         Usuario usuario = usuarioServicio.buscarPorId(uid,em);
 
-        long articuloId = Long.parseLong(ctx.pathParam("id"));
-        Evento a = eventoServicio.buscarPorId(articuloId, em);
+        long eventoId = Long.parseLong(ctx.pathParam("id"));
+        Evento a = eventoServicio.buscarPorId(eventoId, em);
 
         String texto = ctx.formParam("texto");
 
         assert usuario != null;
         comentarioServicio.agregarComentario(texto, usuario, a, em);
 
-        ctx.redirect("/articulos/" + articuloId);
+        ctx.redirect("/eventos/" + eventoId);
 
     }
 
@@ -69,7 +70,7 @@ public class ComentarioControlador {
 
         comentarioServicio.eliminarComentario(c.getId(), em);
 
-        ctx.redirect("/articulos/" + c.getArticuloId());
+        ctx.redirect("/eventos/" + c.getEventoId());
     }
 
     public void modificarComentario(Context ctx) {
@@ -89,7 +90,7 @@ public class ComentarioControlador {
 
         comentarioServicio.modificarComentario(c.getId(),ctx.formParam("texto"), em);
 
-        ctx.redirect("/articulos/" + c.getArticuloId());
+        ctx.redirect("/eventos/" + c.getEventoId());
     }
 
     public void modoEdit(Context ctx) {
@@ -115,7 +116,7 @@ public class ComentarioControlador {
         }
 
         ctx.sessionAttribute("modoEdit", c.getId());
-        ctx.redirect("/articulos/" + c.getArticuloId());
+        ctx.redirect("/eventos/" + c.getEventoId());
     }
 
 

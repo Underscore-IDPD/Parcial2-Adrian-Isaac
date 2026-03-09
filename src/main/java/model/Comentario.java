@@ -37,7 +37,7 @@ public class Comentario {
         return id;
     }
 
-    public Evento getArticuloId() {
+    public Evento getEventoId() {
         return evento;
     }
 

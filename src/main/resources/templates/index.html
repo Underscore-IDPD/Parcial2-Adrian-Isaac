@@ -6,6 +6,7 @@
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css"
           rel="stylesheet">
     <link rel="stylesheet" href="/css/estilo.css">
+    <script src="https://unpkg.com/htmx.org@1.9.12"></script>
     <title>Inicio</title>
 </head>
 
@@ -67,8 +68,15 @@
                     <!-- BOTÓN CREAR USUARIO -->
                     <a th:if="${usuario != null and usuario.rol.name == 'Administrador'}"
                        href="/usuarios"
-                       class="btn btn-sm btn-dark me-2">
+                       class="btn btn-sm btn-dark me-2"->
                         Usuarios
+                    </a>
+
+                    <!-- BOTÓN CREAR LUGAR -->
+                    <a th:if="${usuario != null and usuario.rol.name == 'Administrador'}"
+                       href="/lugares"
+                       class="btn btn-sm btn-dark me-2">
+                        Lugares
                     </a>
 
                     <!-- BOTÓN CREAR EVENTO -->
@@ -114,7 +122,7 @@
                     <!-- ETIQUETAS DEL EVENTO -->
                     <div class="mb-3">
                         <a th:each="e : ${a.etiquetas}"
-                           th:href="@{/eventos/etiqueta/{nombre}(nombre=${e.nombre})}"
+                           th:href="@{/etiqueta/{nombre}(nombre=${e.nombre})}"
                            class="badge bg-dark text-decoration-none me-1"
                            th:text="${e.nombre}">
                         </a>
@@ -158,7 +166,7 @@
                 <div class="d-flex flex-wrap">
 
                     <a th:each="e : ${etiquetas}"
-                       th:href="@{/eventos/etiqueta/{nombre}(nombre=${e.nombre})}"
+                       th:href="@{/etiqueta/{nombre}(nombre=${e.nombre})}"
                        class="badge bg-dark text-decoration-none p-2 m-1"
                        th:text="${e.nombre}">
                     </a>

@@ -1,6 +1,7 @@
 package controller;
 
 import io.javalin.Javalin;
+import io.javalin.config.JavalinConfig;
 import io.javalin.http.Context;
 import io.javalin.http.UploadedFile;
 import jakarta.persistence.EntityManager;
@@ -28,23 +29,24 @@ public class EventoControlador {
         this.lugarServicio = lugarServicio;
     }
 
-    public void registrarRutas(Javalin app) {
+    public void registrarRutas(JavalinConfig app) {
 
-        app.get("/", this::index);
+        
+        app.routes.get("/", this::index);
 
-        app.get("/eventos/{id}", this::verEvento);
+        app.routes.get("/eventos/{id}", this::verEvento);
 
-        app.get("/eventos", this::crearEventoVisual);
+        app.routes.get("/eventos", this::crearEventoVisual);
 
-        app.post("/eventos", this::crearEvento);
+        app.routes.post("/eventos", this::crearEvento);
 
-        app.post("/eventos/{id}/delete", this::eliminarEvento);
+        app.routes.post("/eventos/{id}/delete", this::eliminarEvento);
 
-        app.get("/eventos/{id}/edit", this::modificarEventoVisual);
+        app.routes.get("/eventos/{id}/edit", this::modificarEventoVisual);
 
-        app.post("/eventos/{id}/edit", this::modificarEvento);
+        app.routes.post("/eventos/{id}", this::modificarEvento);
 
-        app.get("/eventos/etiqueta/{nombre}", this::filtrarPorEtiqueta);
+        app.routes.get("/etiqueta/{nombre}", this::filtrarPorEtiqueta);
 
 
     }
@@ -102,103 +104,83 @@ public class EventoControlador {
     }
 
     private void crearEventoVisual(Context ctx) {
+
         if(!authServicio.esAutor(ctx) && !authServicio.esAdmin(ctx)){
             ctx.status(403);
             return;
         }
 
         EntityManager em = ctx.attribute("em");
+
         Long uid = ctx.sessionAttribute("usuarioId");
-        Usuario u = usuarioServicio.buscarPorId(uid,em);
-        ctx.attribute("usuario", u);
-        ctx.attribute("error", null);
+        Usuario u = usuarioServicio.buscarPorId(uid, em);
 
         String errorParam = ctx.queryParam("error");
         int error = 0;
+
         if (errorParam != null) {
             try {
                 error = Integer.parseInt(errorParam);
-            } catch (NumberFormatException _) {
-            }
+            } catch (NumberFormatException ignored) {}
         }
-        String errormsg = "";
-        switch(error){
-            case 1:
-                errormsg = "Concepto no puede ser vacio";
-                break;
-            case 2:
-                errormsg = "Descripcion no puede ser vacio";
-                break;
-            case 3:
-                errormsg = "Autor-Concepto o Concepto-Descripcion repetidos";
-                break;
-            default:
-                break;
-        }
-        HashMap<String, Object> modelo = new HashMap<>();
-        modelo.put("error", String.valueOf(error));
+
+        String errormsg = switch (error) {
+            case 1 -> "Archivo debe ser una imagen válida";
+            default -> "";
+        };
+
+        HashMap<String,Object> modelo = new HashMap<>();
+
+        modelo.put("usuario", u);
+        modelo.put("error", error);
         modelo.put("errormsg", errormsg);
+        modelo.put("evento", null);
+
+        modelo.put("lugares",
+                lugarServicio.listar(em));
 
         ctx.render("templates/form-evento.html", modelo);
     }
+
 
     private void modificarEventoVisual(Context ctx) {
 
         EntityManager em = ctx.attribute("em");
         long id = Long.parseLong(ctx.pathParam("id"));
 
-        Evento a = eventoServicio.buscarPorId(id,em);
+        Evento e = eventoServicio.buscarPorId(id, em);
 
-        if(a == null){
+        if (e == null) {
             ctx.status(404);
             return;
         }
 
-        if(!authServicio.permitirBorrado(ctx, a)){
+        if (!authServicio.permitirBorrado(ctx, e)) {
             ctx.status(403);
             return;
         }
 
-        ctx.attribute("modo", "editar");
-        ctx.attribute("evento", a);
-
         Long uid = ctx.sessionAttribute("usuarioId");
-        Usuario u = usuarioServicio.buscarPorId(uid,em);
-        ctx.attribute("usuario", u);
+        Usuario u = usuarioServicio.buscarPorId(uid, em);
 
         String etiquetasTexto = "";
 
-        if(a.getEtiquetas() != null){
-            etiquetasTexto = a.getEtiquetas()
+        if (e.getEtiquetas() != null) {
+            etiquetasTexto = e.getEtiquetas()
                     .stream()
                     .map(Etiqueta::getNombre)
-                    .collect(Collectors.joining(", "));
+                    .collect(Collectors.joining(","));
         }
 
-        String errorParam = ctx.queryParam("error");
-        int error = 0;
-        if (errorParam != null) {
-            try {
-                error = Integer.parseInt(errorParam);
-            } catch (NumberFormatException _) {
-            }
-        }
-        String errormsg = "";
-        switch(error){
-            case 1:
-                errormsg = "Concepto no puede ser vacio";
-                break;
-            case 2:
-                errormsg = "Descripcion no puede ser vacio";
-            case 3:
-                errormsg = "Autor-Concepto o Concepto-Descripcion repetidos";
-        }
-        HashMap<String, Object> modelo = new HashMap<>();
-        modelo.put("error", ""+0);
-        modelo.put("errormsg", errormsg);
-        ctx.attribute("etiquetasTexto", etiquetasTexto);
+        Map<String,Object> modelo = new HashMap<>();
 
-        ctx.render("templates/form-evento.html");
+        modelo.put("modo","editar");
+        modelo.put("evento", e);
+        modelo.put("usuario", u);
+        modelo.put("etiquetasTexto", etiquetasTexto);
+        modelo.put("lugares", lugarServicio.listar(em));
+
+        ctx.render("templates/form-evento.html", modelo);
     }
 
 
@@ -215,7 +197,15 @@ public class EventoControlador {
             mapaUsuarios.put(u.getId(), u);
         }
         ctx.attribute("eventos", filtrados);
-        ctx.attribute("usuario", ctx.sessionAttribute("usuario"));
+
+        Long uid = ctx.sessionAttribute("usuarioId");
+        Usuario actual = null;
+
+        if (uid != null) {
+            actual = usuarioServicio.buscarPorId(uid, em);
+        }
+
+        ctx.attribute("usuario", actual);
         ctx.attribute("usuarios", mapaUsuarios);
         ctx.attribute("etiquetas", eventoServicio.listarEtiquetas(em));
 
@@ -228,7 +218,7 @@ public class EventoControlador {
         EntityManager em = ctx.attribute("em");
 
         long id = Long.parseLong(ctx.pathParam("id"));
-        Evento e = eventoServicio.buscarPorId(id,em);
+        Evento e = eventoServicio.buscarPorId(id, em);
 
         if (e == null) {
             ctx.status(404);
@@ -237,48 +227,50 @@ public class EventoControlador {
 
         Map<String, Object> modelo = new HashMap<>();
 
-        Long editandoId = ctx.sessionAttribute("modoEdit");
-        modelo.put("modoEdit", editandoId);
+        Long uid = ctx.sessionAttribute("usuarioId");
 
-        List<Usuario> usuarioList = usuarioServicio.listar(em);
+        Usuario usuarioSesion = null;
+
+        if (uid != null) {
+            usuarioSesion = usuarioServicio.buscarPorId(uid, em);
+        }
+
+        Usuario organizador = e.getOrganizador();
+
+        List<Comentario> comentarios =
+                eventoServicio.listarComentarios(id, em);
+
+        List<Usuario> usuarios =
+                usuarioServicio.listar(em);
 
         Map<Long, Usuario> mapaUsuarios = new HashMap<>();
-        for(Usuario u : usuarioList){
+
+        for (Usuario u : usuarios) {
             mapaUsuarios.put(u.getId(), u);
         }
 
-        ctx.sessionAttribute("modoEdit", null);
-        Long uid = ctx.sessionAttribute("usuarioId");
-
-        Usuario organizador = null, usuarioSesion = null;
-        for(Usuario u : usuarioList){
-            if(Objects.equals(u.getId(), e.getOrganizador().getId())){
-                organizador = u;
-            }
-            if(Objects.equals(u.getId(), uid)){
-                usuarioSesion = u;
-            }
-        }
-
-        List<Comentario> comentarios = eventoServicio.listarComentarios(id,em);
+        int inscritos = e.getInscripciones().size();
+        int cuposDisponibles = e.getCupoMaximo() - inscritos;
 
         modelo.put("evento", e);
         modelo.put("organizador", organizador);
-        modelo.put("comentarios",comentarios );
+        modelo.put("comentarios", comentarios);
         modelo.put("usuarios", mapaUsuarios);
         modelo.put("usuario", usuarioSesion);
-        modelo.put("puedeEditar", authServicio.permitirBorrado(ctx, e));
-        modelo.put("esAdmin", authServicio.esAdmin(ctx));
-        modelo.put("editandoId", editandoId);
-        int inscritos = e.getInscripciones().size();
-        int cuposDisponibles =
-                e.getCupoMaximo() - inscritos;
 
         modelo.put("inscritos", inscritos);
         modelo.put("cuposDisponibles", cuposDisponibles);
 
-        ctx.render("templates/evento.html", modelo);
+        modelo.put("puedeEditar",
+                authServicio.esCreador(ctx, e));
 
+        modelo.put("puedeCancelar",
+                authServicio.permitirBorrado(ctx, e));
+
+        modelo.put("puedeEliminar",
+                authServicio.permitirBorrado(ctx, e));
+
+        ctx.render("templates/evento.html", modelo);
     }
 
 

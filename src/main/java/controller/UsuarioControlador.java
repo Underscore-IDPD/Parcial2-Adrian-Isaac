@@ -1,5 +1,6 @@
 package controller;
 
+import io.javalin.config.JavalinConfig;
 import io.javalin.http.UploadedFile;
 import jakarta.persistence.EntityManager;
 import model.Usuario;
@@ -27,25 +28,25 @@ public class UsuarioControlador {
         this.usuarioServicio = usuarioServicio;
     }
 
-    public void registrarRutas(Javalin app) {
+    public void registrarRutas(JavalinConfig app) {
 
-        app.get("/login", this::loginVisual);
+        app.routes.get("/login", this::loginVisual);
 
-        app.post("/login", this::login);
+        app.routes.post("/login", this::login);
 
-        app.get("/logout", this::logout);
+        app.routes.get("/logout", this::logout);
 
-        app.get("/usuarios", this::listarUsuarios);
+        app.routes.get("/usuarios", this::listarUsuarios);
 
-        app.get("/usuarios/crear", this::crearUsuarioVisual);
+        app.routes.get("/usuarios/crear", this::crearUsuarioVisual);
 
-        app.post("/usuarios", this::crearUsuario);
+        app.routes.post("/usuarios", this::crearUsuario);
 
-        app.get("/usuarios/{id}/edit", this::modificarUsuarioVisual);
+        app.routes.get("/usuarios/{id}/edit", this::modificarUsuarioVisual);
 
-        app.post("/usuarios/{id}/edit", this::modificarUsuario);
+        app.routes.post("/usuarios/{id}/edit", this::modificarUsuario);
 
-        app.post("/usuarios/{id}/delete", this::eliminarUsuario);
+        app.routes.post("/usuarios/{id}/delete", this::eliminarUsuario);
     }
 
     private void loginVisual(Context ctx) {

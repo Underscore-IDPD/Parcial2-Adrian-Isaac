@@ -12,7 +12,7 @@
 <nav class="navbar navbar-light bg-white shadow-sm mb-4">
     <div class="container">
 
-        <a class="navbar-brand fw-bold" href="/">Lista de Eventos</a>
+        <a class="navbar-brand fw-bold" href="/">Lista de Articulos</a>
 
         <div class="d-flex align-items-center">
 
@@ -55,10 +55,10 @@
 <main class="container">
 
     <div class="d-flex justify-content-between align-items-center mb-4">
-        <h2 class="mb-0 fw-bold text-dark">Gestión de Usuarios</h2>
+        <h2 class="mb-0 fw-bold text-dark">Gestión de Lugares</h2>
 
         <a href="/usuarios/crear" class="btn btn-dark shadow-sm px-4">
-            Crear Usuario
+            Registrar Lugar
         </a>
     </div>
 
@@ -70,78 +70,81 @@
                 <tr>
                     <th class="ps-4 py-3 text-secondary">Foto</th>
                     <th class="py-3 text-secondary">ID</th>
-                    <th class="py-3 text-secondary">Nombre de Usuario</th>
-                    <th class="py-3 text-secondary">Rol</th>
+                    <th class="py-3 text-secondary">Nombre de Lugar</th>
                     <th class="text-end pe-4 py-3 text-secondary">Acciones</th>
                 </tr>
                 </thead>
 
                 <tbody>
 
-                <tr th:each="u : ${usuarios}">
+                <tr th:each="l : ${lugares}">
 
                     <!-- FOTO -->
                     <td class="ps-4">
-                        <img th:src="${u.fotoDataUrl}"
+                        <img th:src="${l.fotoDataUrl}"
                              class="rounded-circle me-2"
                              style="width:70px; height:70px; object-fit:cover;" />
                     </td>
 
                     <!-- ID -->
                     <td class="fw-bold text-secondary"
-                        th:text="${u.id}">
+                        th:text="${l.id}">
                         1
                     </td>
 
                     <!-- USERNAME -->
                     <td class="fw-medium"
-                        th:text="${u.username}">
-                        username
-                    </td>
-
-                    <!-- ROL -->
-                    <td>
-                        <span th:class="${u.rol != null && u.rol.name() == 'Administrador'} ?
-                                          'badge bg-success' :
-                                          'badge bg-secondary'"
-                              th:text="${u.rol}">
-                            Rol
-                        </span>
+                        th:text="${l.nombre}">
+                        nombre
                     </td>
 
                     <!-- ACCIONES -->
                     <td class="text-end pe-4">
 
-                        <a th:href="@{/usuarios/{id}/edit(id=${u.id})}"
-                           class="btn btn-sm btn-outline-primary me-2">
+                        <form th:if="${!l.activo}"
+                              th:action="@{/lugares/{id}/edit(id=${l.id})}"
+                              method="post"
+                              class="btn btn-sm btn-outline-primary me-2">
                             Editar
-                        </a>
+                        </form>
 
-                        <form th:if="${usuario != null && usuario.id != u.id}"
-                              th:action="@{/usuarios/{id}/delete(id=${u.id})}"
+                        <form th:if="${l.activo}"
+                              th:action="@{/lugares/{id}/deactivate(id=${l.id})}"
                               method="post"
                               class="d-inline">
 
                             <button type="submit"
                                     class="btn btn-sm btn-outline-danger"
-                                    onclick="return confirm('¿Eliminar usuario?');">
-                                Eliminar
+                                    onclick="return confirm('¿Desactivar lugar? (Se quitará de todos sus eventos pendientes)');">
+                                Desactivar
                             </button>
                         </form>
 
-                        <span th:if="${usuario != null && usuario.id == u.id}"
+                        <form th:if="${!l.activo}"
+                              th:action="@{/lugares/{id}/activate(id=${l.id})}"
+                              method="post"
+                              class="d-inline">
+
+                            <button type="submit"
+                                    class="btn btn-sm btn-outline-warning"
+                                    onclick="return confirm('¿Reactivar lugar? (No se pueden realizar cambios a un lugar activo)');">
+                                Activar
+                            </button>
+                        </form>
+
+                        <span th:if="${!l.activo}"
                               class="text-muted small ms-2 fw-semibold">
-                            (Tú)
+                            (Inactivo)
                         </span>
 
                     </td>
                 </tr>
 
-                <!-- SIN USUARIOS -->
-                <tr th:if="${#lists.isEmpty(usuarios)}">
+                <!-- SIN LUGARES -->
+                <tr th:if="${#lists.isEmpty(lugares)}">
                     <td colspan="5" class="text-center text-muted py-5">
                         <p class="mb-0">
-                            No hay usuarios registrados en el sistema.
+                            No hay lugares registrados en el sistema.
                         </p>
                     </td>
                 </tr>

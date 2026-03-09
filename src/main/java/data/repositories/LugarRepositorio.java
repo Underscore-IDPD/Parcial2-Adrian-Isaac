@@ -12,7 +12,7 @@ public class LugarRepositorio extends BaseRepositorio {
         em.getTransaction().begin();
         Lugar undefined = buscarPorId(0L,em);
 
-        em.createQuery("UPDATE Evento e SET e.lugar = :undefined WHERE e.organizador.id = :idLugar")
+        em.createQuery("UPDATE Evento e SET e.lugar = :undefined WHERE e.lugar.id = :idLugar")
                 .setParameter("idLugar", id)
                 .setParameter("undefined", undefined)
                 .executeUpdate();
@@ -24,12 +24,21 @@ public class LugarRepositorio extends BaseRepositorio {
     public void crearLugarBaseSQL(EntityManager em) {
 
         if(buscarPorId(0L,em) != null) return;
-        String sql = "INSERT INTO lugar (id, nombre, maxcapacidad) VALUES (?, ?, ?)";
+        String sql = "INSERT INTO lugar (id, nombre, maxcapacidad, activo) VALUES (?, ?, ?, TRUE)";
 
         em.createNativeQuery(sql)
                 .setParameter(1, 0L)
                 .setParameter(2, "<undefined>")
                 .setParameter(3, 0)
+                .executeUpdate();
+    }
+
+    public void desactivar(Long id, EntityManager em) {
+        Lugar undefined = buscarPorId(0L,em);
+
+        em.createQuery("UPDATE Evento e SET e.lugar = :undefined WHERE e.lugar.id = :idLugar")
+                .setParameter("idLugar", id)
+                .setParameter("undefined", undefined)
                 .executeUpdate();
     }
 

@@ -1,0 +1,253 @@
+package controller;
+
+import io.javalin.config.JavalinConfig;
+import io.javalin.http.Context;
+import io.javalin.http.UploadedFile;
+import jakarta.persistence.EntityManager;
+import model.*;
+import service.AuthServicio;
+import service.LugarServicio;
+import service.UsuarioServicio;
+
+import java.io.IOException;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.LocalTime;
+import java.util.Base64;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
+
+public class LugarControlador {
+
+    private final LugarServicio lugarServicio;
+    private final AuthServicio authServicio;
+    private final UsuarioServicio usuarioServicio;
+
+    public LugarControlador(LugarServicio lugarServicio, AuthServicio authServicio, UsuarioServicio usuarioServicio) {
+        this.lugarServicio = lugarServicio;
+        this.authServicio = authServicio;
+        this.usuarioServicio = usuarioServicio;
+    }
+
+    public void registrarRutas(JavalinConfig app) {
+
+        app.routes.get("/lugares", this::listarLugares);
+
+        app.routes.get("/lugares/{id}", this::verLugar);
+
+        app.routes.get("/lugares/crear", this::crearLugarVisual);
+
+        app.routes.post("/lugares", this::crearLugar);
+
+        app.routes.post("/lugares/{id}/deactivate", this::desactivarLugar);
+
+    }
+
+    private void listarLugares(Context ctx){
+        EntityManager em = ctx.attribute("em");
+        Long uid = ctx.sessionAttribute("usuarioId");
+        Usuario usuario = usuarioServicio.buscarPorId(uid,em);
+
+        List<Lugar> lugares = lugarServicio.listar(em);
+        lugares.remove(lugarServicio.buscarPorId(0L,em));
+
+        ctx.attribute("usuario",usuario);
+        ctx.attribute("lugares", lugares);
+        ctx.render("templates/lista-lugares.html");
+    }
+
+    private void crearLugarVisual(Context ctx) {
+
+        if(!authServicio.esAutor(ctx) && !authServicio.esAdmin(ctx)){
+            ctx.status(403);
+            return;
+        }
+
+        EntityManager em = ctx.attribute("em");
+
+        Long uid = ctx.sessionAttribute("usuarioId");
+        Usuario u = usuarioServicio.buscarPorId(uid, em);
+
+        String errorParam = ctx.queryParam("error");
+        int error = 0;
+
+        if (errorParam != null) {
+            try {
+                error = Integer.parseInt(errorParam);
+            } catch (NumberFormatException ignored) {}
+        }
+
+        String errormsg = switch (error) {
+            case 1 -> "Archivo debe ser una imagen válida";
+            default -> "";
+        };
+
+        HashMap<String,Object> modelo = new HashMap<>();
+
+        modelo.put("usuario", u);
+        modelo.put("error", error);
+        modelo.put("errormsg", errormsg);
+        modelo.put("lugar", null);
+
+        modelo.put("lugares",
+                lugarServicio.listar(em));
+
+        ctx.render("templates/form-lugar.html", modelo);
+    }
+
+
+    private void modificarLugarVisual(Context ctx) {
+
+        EntityManager em = ctx.attribute("em");
+        long id = Long.parseLong(ctx.pathParam("id"));
+
+        Lugar l = lugarServicio.buscarPorId(id, em);
+
+        if (l == null) {
+            ctx.status(404);
+            return;
+        }
+
+        if (!authServicio.esAdmin(ctx)) {
+            ctx.status(403);
+            return;
+        }
+
+        Long uid = ctx.sessionAttribute("usuarioId");
+        Usuario u = usuarioServicio.buscarPorId(uid, em);
+
+        Map<String,Object> modelo = new HashMap<>();
+
+        modelo.put("modo","editar");
+        modelo.put("lugar", l);
+        modelo.put("usuario", u);
+        modelo.put("lugares", lugarServicio.listar(em));
+
+        ctx.render("templates/form-lugar.html", modelo);
+    }
+
+    private void verLugar(Context ctx) {
+        //TODO
+    }
+
+
+
+    private void crearLugar(Context ctx) {
+
+        EntityManager em = ctx.attribute("em");
+        Long uid = ctx.sessionAttribute("usuarioId");
+        Usuario usuario = usuarioServicio.buscarPorId(uid,em);
+
+        if(!authServicio.esAutor(ctx) && !authServicio.esAdmin(ctx)){
+            ctx.status(403);
+            return;
+        }
+
+        UploadedFile archivo = ctx.uploadedFile("foto");
+
+        String fotoBase64 = null;
+        String tipoImagen = null;
+
+        if (archivo != null && archivo.size() > 0) {
+
+            if (!archivo.contentType().startsWith("image/")) {
+                ctx.redirect("/usuarios/crear?error=1");
+                return;
+            }
+
+            try {
+                byte[] bytes = archivo.content().readAllBytes();
+                fotoBase64 = Base64.getEncoder().encodeToString(bytes);
+                tipoImagen = archivo.contentType();
+
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
+
+        String nombre = ctx.formParam("nombre");
+        String capacidadString = ctx.formParam("capacidad");
+
+        int capacidad = 0;
+
+        if(capacidadString != null){
+            capacidad = Integer.parseInt(capacidadString);
+        }
+
+        if(lugarServicio.crearLugar(nombre, capacidad, fotoBase64, tipoImagen, em) != null)
+            ctx.redirect("/");
+        else
+            ctx.redirect("/lugares?error=1");
+    }
+
+    private void desactivarLugar(Context ctx) {
+
+        EntityManager em = ctx.attribute("em");
+        Lugar l = lugarServicio.buscarPorId(Long.parseLong(ctx.pathParam("id")), em);
+
+        if(l == null){
+            ctx.status(404);
+            return;
+        }
+
+        if(!authServicio.esAdmin(ctx)){
+            ctx.status(403);
+            return;
+        }
+
+        lugarServicio.desactivarLugar(l.getId(), em);
+
+        ctx.redirect("/");
+    }
+
+    private void modificarLugar(Context ctx) {
+
+        EntityManager em = ctx.attribute("em");
+        Long uid = ctx.sessionAttribute("usuarioId");
+        String luid = ctx.pathParam("id");
+
+        if(!authServicio.esAutor(ctx) && !authServicio.esAdmin(ctx)){
+            ctx.status(403);
+            return;
+        }
+
+        UploadedFile archivo = ctx.uploadedFile("foto");
+
+        String fotoBase64 = null;
+        String tipoImagen = null;
+
+        if (archivo != null && archivo.size() > 0) {
+
+            if (!archivo.contentType().startsWith("image/")) {
+                ctx.redirect("/usuarios/crear?error=1");
+                return;
+            }
+
+            try {
+                byte[] bytes = archivo.content().readAllBytes();
+                fotoBase64 = Base64.getEncoder().encodeToString(bytes);
+                tipoImagen = archivo.contentType();
+
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
+
+        String nombre = ctx.formParam("nombre");
+        String capacidadString = ctx.formParam("capacidad");
+
+        int capacidad = 0;
+
+        if(capacidadString != null){
+            capacidad = Integer.parseInt(capacidadString);
+        }
+
+        if(lugarServicio.modificarLugar(Long.parseLong(luid),nombre,capacidad,fotoBase64,tipoImagen,em))
+            ctx.redirect("/");
+        else
+            ctx.redirect("/lugares?error=1");
+    }
+
+}

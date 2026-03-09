@@ -2,11 +2,16 @@ package com.pucmm.csti18104833.practica2;
 
 import controller.EventoControlador;
 import controller.ComentarioControlador;
+import controller.LugarControlador;
 import controller.UsuarioControlador;
 import data.repositories.*;
 import io.javalin.Javalin;
 import io.javalin.http.staticfiles.Location;
 import io.javalin.rendering.template.JavalinThymeleaf;
+import jakarta.servlet.SessionTrackingMode;
+import org.thymeleaf.TemplateEngine;
+import org.thymeleaf.templatemode.TemplateMode;
+import org.thymeleaf.templateresolver.ClassLoaderTemplateResolver;
 import jakarta.persistence.EntityManager;
 import model.Evento;
 import model.Comentario;
@@ -26,40 +31,6 @@ import java.util.Base64;
 
 public class Main {
     static void main() throws SQLException {
-        var app = Javalin.create(config ->{
-            config.staticFiles.add(staticFileConfig -> {
-                staticFileConfig.hostedPath = "/";
-                staticFileConfig.directory = "public";
-                staticFileConfig.location = Location.CLASSPATH;
-                staticFileConfig.precompress = false;
-                staticFileConfig.aliasCheck = null;
-            });
-
-            config.fileRenderer(new JavalinThymeleaf());
-        });
-
-        app.start(7070);
-        probarConexion();
-
-        app.before(ctx -> {
-            ctx.attribute("em", Javanator.getEntityManager());
-        });
-
-        app.after(ctx -> {
-            EntityManager em = ctx.attribute("em");
-            if (em != null && em.isOpen()) {
-                em.close();
-            }
-        });
-
-        app.exception(Exception.class, (e, ctx) -> {
-            EntityManager em = ctx.attribute("em");
-            if (em != null && em.getTransaction().isActive()) {
-                em.getTransaction().rollback();
-            }
-            e.printStackTrace(); // ver el error real en consola
-            ctx.status(500).result("Error: " + e.getMessage()); // ver en navegador
-        });
 
         EventoRepositorio eventoRepositorio = new EventoRepositorio();
         UsuarioRepositorio usuarioRepositorio = new UsuarioRepositorio();
@@ -80,105 +51,147 @@ public class Main {
                 authServicio,usuarioServicio
         );
         ComentarioControlador comentarioControlador = new ComentarioControlador(
-          comentarioServicio, eventoServicio,authServicio,usuarioServicio
+                comentarioServicio, eventoServicio,authServicio,usuarioServicio
         );
+        LugarControlador lugarControlador = new LugarControlador(lugarServicio,authServicio,usuarioServicio);
 
-        EventoControlador.registrarRutas(app);
-        usuarioControlador.registrarRutas(app);
-        comentarioControlador.registrarRutas(app);
+        var app = Javalin.create(config ->{
+            config.jetty.modifyServletContextHandler(handler -> {
+                handler.getSessionHandler().setSessionTrackingModes(
+                        java.util.Set.of(SessionTrackingMode.COOKIE)
+                );
+            });
 
-        app.before("/*", ctx -> {
-            if (ctx.sessionAttribute("usuarioId") == null) {
+            config.staticFiles.add(staticFileConfig -> {
+                staticFileConfig.hostedPath = "/";
+                staticFileConfig.directory = "public";
+                staticFileConfig.location = Location.CLASSPATH;
+                staticFileConfig.aliasCheck = null;
+            });
 
-                String cookieRecordar = ctx.cookie("recordar-usuario");
+            config.routes.before(ctx -> {
+                ctx.attribute("em", Javanator.getEntityManager());
+            });
 
-                if (cookieRecordar != null) {
-                    try {
-                        String id = usuarioServicio.desencriptarCookie(cookieRecordar);
-                        Long uid = Long.parseLong(id);
+            config.routes.after(ctx -> {
+                EntityManager em = ctx.attribute("em");
+                if (em != null && em.isOpen()) {
+                    em.close();
+                }
+            });
 
-                        EntityManager em = ctx.attribute("em");
-                        Usuario u = usuarioServicio.buscarPorId(uid, em);
+            config.routes.exception(Exception.class, (e, ctx) -> {
+                EntityManager em = ctx.attribute("em");
+                if (em != null && em.getTransaction().isActive()) {
+                    em.getTransaction().rollback();
+                }
+                e.printStackTrace(); // ver el error real en consola
+                ctx.status(500).result("Error: " + e.getMessage()); // ver en navegador
+            });
 
-                        if (u != null) {
-                            ctx.sessionAttribute("usuarioId", u.getId());
+            config.routes.before("/*", ctx -> {
+                if (ctx.sessionAttribute("usuarioId") == null) {
+
+                    String cookieRecordar = ctx.cookie("recordar-usuario");
+
+                    if (cookieRecordar != null) {
+                        try {
+                            String id = usuarioServicio.desencriptarCookie(cookieRecordar);
+                            Long uid = Long.parseLong(id);
+
+                            EntityManager em = ctx.attribute("em");
+                            Usuario u = usuarioServicio.buscarPorId(uid, em);
+
+                            if (u != null) {
+                                ctx.sessionAttribute("usuarioId", u.getId());
+                            }
+                        } catch (Exception e) {
+                            ctx.removeCookie("recordar-usuario");
                         }
-                    } catch (Exception e) {
-                        ctx.removeCookie("recordar-usuario");
                     }
                 }
-            }
+            });
+
+            config.routes.before("/login", ctx -> {
+                if(authServicio.estaLoggeado(ctx)) ctx.redirect("/");
+            });
+
+            config.routes.before("/usuarios", ctx ->{
+                if(!authServicio.esAdmin(ctx)) ctx.redirect("/");
+            });
+
+            config.routes.before("/usuarios/*", ctx -> {
+                if (!authServicio.esAdmin(ctx)) ctx.redirect("/");
+            });
+
+            config.routes.before("/articulos", ctx -> {
+                if(!authServicio.esAdmin(ctx) && !authServicio.esAutor(ctx)){
+                    ctx.redirect("/");
+                }
+            });
+
+            config.routes.before("/articulos/*", ctx -> {
+                if(ctx.path().matches("/articulos/\\d+") || ctx.path().contains("/etiqueta/")) {
+                    return;
+                }
+
+                if(!authServicio.estaLoggeado(ctx)) {
+                    ctx.redirect("/login");
+                    return;
+                }
+
+                if(ctx.path().endsWith("/comentarios")) return;
+
+                if(!authServicio.esAdmin(ctx) && !authServicio.esAutor(ctx)) {
+                    ctx.redirect("/");
+                }
+
+
+            });
+
+            config.routes.before("/articulos/{id}/*", ctx ->{
+                if (authServicio.esAdmin(ctx) || ctx.path().endsWith("/comentarios") || ctx.path().contains("/etiqueta")) return;
+
+                long idArticulo = Long.parseLong(ctx.pathParam("id"));
+                EntityManager em = ctx.attribute("em");
+                Evento art = eventoServicio.buscarPorId(idArticulo,em);
+                Long idUsuario = ctx.sessionAttribute("usuarioId");
+
+                if (art != null && !art.getOrganizador().getId().equals(idUsuario)) {
+                    ctx.redirect("/");
+                }
+            });
+
+
+            config.routes.before("/comentarios/{id}/*", ctx -> {
+                if (!authServicio.estaLoggeado(ctx)) {
+                    ctx.redirect("/login");
+                    return;
+                }
+
+                if (authServicio.esAdmin(ctx)) return;
+
+                long idComentario = Long.parseLong(ctx.pathParam("id"));
+                EntityManager em = ctx.attribute("em");
+                Comentario com = comentarioServicio.buscarPorId(idComentario, em);
+
+                Long idUsuario = ctx.sessionAttribute("usuarioId");
+
+                if (com != null && !com.getAutor().getId().equals(idUsuario)) {
+                    ctx.redirect("/");
+                }
+            });
+
+            EventoControlador.registrarRutas(config);
+            usuarioControlador.registrarRutas(config);
+            comentarioControlador.registrarRutas(config);
+            lugarControlador.registrarRutas(config);
+
+            config.fileRenderer(new JavalinThymeleaf());
         });
 
-        app.before("/login", ctx -> {
-            if(authServicio.estaLoggeado(ctx)) ctx.redirect("/");
-        });
-
-        app.before("/usuarios", ctx ->{
-            if(!authServicio.esAdmin(ctx)) ctx.redirect("/");
-        });
-
-        app.before("/usuarios/*", ctx -> {
-            if (!authServicio.esAdmin(ctx)) ctx.redirect("/");
-        });
-
-        app.before("/articulos", ctx -> {
-            if(!authServicio.esAdmin(ctx) && !authServicio.esAutor(ctx)){
-                ctx.redirect("/");
-            }
-        });
-
-        app.before("/articulos/*", ctx -> {
-            if(ctx.path().matches("/articulos/\\d+") || ctx.path().contains("/etiqueta/")) {
-                return;
-            }
-
-            if(!authServicio.estaLoggeado(ctx)) {
-                ctx.redirect("/login");
-                return;
-            }
-
-            if(ctx.path().endsWith("/comentarios")) return;
-
-            if(!authServicio.esAdmin(ctx) && !authServicio.esAutor(ctx)) {
-                ctx.redirect("/");
-            }
-
-
-        });
-
-        app.before("/articulos/{id}/*", ctx ->{
-            if (authServicio.esAdmin(ctx) || ctx.path().endsWith("/comentarios") || ctx.path().contains("/etiqueta")) return;
-
-            long idArticulo = Long.parseLong(ctx.pathParam("id"));
-            EntityManager em = ctx.attribute("em");
-            Evento art = eventoServicio.buscarPorId(idArticulo,em);
-            Long idUsuario = ctx.sessionAttribute("usuarioId");
-
-            if (art != null && !art.getOrganizador().getId().equals(idUsuario)) {
-                ctx.redirect("/");
-            }
-        });
-
-
-        app.before("/comentarios/{id}/*", ctx -> {
-            if (!authServicio.estaLoggeado(ctx)) {
-                ctx.redirect("/login");
-                return;
-            }
-
-            if (authServicio.esAdmin(ctx)) return;
-
-            long idComentario = Long.parseLong(ctx.pathParam("id"));
-            EntityManager em = ctx.attribute("em");
-            Comentario com = comentarioServicio.buscarPorId(idComentario, em);
-
-            Long idUsuario = ctx.sessionAttribute("usuarioId");
-
-            if (com != null && !com.getAutor().getId().equals(idUsuario)) {
-                ctx.redirect("/");
-            }
-        });
+        app.start(7070);
+        probarConexion();
 
         EntityManager em = Javanator.getEntityManager();
 
@@ -204,8 +217,19 @@ public class Main {
                 em
         );
 
-        String fotoBase64 = imagenBase64DesdeResources("therian-sociedad.jpg");
+        String fotoBase64 = imagenBase64DesdeResources("campus-PUCMM.jpg");
         String tipoImagen = "image/jpg";
+
+        ls.crearLugar(
+          "Lab Ingeniería Mecánica e Industrial",
+                60,
+                fotoBase64,
+                tipoImagen,
+                em
+        );
+
+        fotoBase64 = imagenBase64DesdeResources("therian-sociedad.jpg");
+        tipoImagen = "image/jpg";
 
         es.crearEvento(
                 "Junte Therian PUCMM",
@@ -213,7 +237,7 @@ public class Main {
                 60,
                 60,
                 admin,
-                ls.buscarPorId(0L,em),
+                ls.buscarPorId(1L,em),
                 LocalDateTime.of(2026,12,31,8,30,0),
                 "furro, therian, wady",
                 fotoBase64, tipoImagen,

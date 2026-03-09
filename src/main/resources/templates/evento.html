@@ -67,34 +67,47 @@
                          class="w-100 banner-evento"
                          alt="Banner evento">
 
-                    <!-- Gradiente oscuro -->
                     <div class="banner-gradient"></div>
 
-                    <!-- TEXTO SOBRE IMAGEN -->
                     <div class="banner-text">
 
-                        <h1 class="fw-bold text-white mb-1"
+                        <h1 class="fw-bold text-white mb-3"
                             th:text="${evento.concepto}">
                         </h1>
 
-                        <h5 class="text-white"
-                            th:text="|Organizado por ${organizador.username}|">
-                        </h5>
+                        <div class="d-flex align-items-center">
+
+                            <img th:src="${organizador.fotoDataUrl}"
+                                 class="organizador-avatar me-3"
+                                 alt="Organizador">
+
+                            <div class="text-white">
+
+                                <small class="opacity-75 d-block">
+                                    Organizado por
+                                </small>
+
+                                <span class="fw-semibold fs-5"
+                                      th:text="${organizador.username}">
+                                </span>
+
+                            </div>
+
+                        </div>
 
                     </div>
 
-                    <!-- BADGE ESTADO -->
                     <div class="banner-badge">
 
-            <span th:if="${evento.termino}"
-                  class="badge bg-secondary">
-                Finalizado
-            </span>
+                    <span th:if="${evento.termino}"
+                          class="badge bg-secondary">
+                    Finalizado
+                    </span>
 
                         <span th:if="${!evento.termino && inscritos >= evento.cupoMaximo}"
                               class="badge bg-danger">
-                Evento lleno
-            </span>
+                        Evento lleno
+                        </span>
 
                     </div>
 
@@ -111,12 +124,48 @@
                             Creado el
                             <span th:text="${#temporals.format(evento.fechaCreacion,'dd/MM/yyyy HH:mm')}"></span>
 
-                            <span th:if="${evento.fechaModificacion != evento.fechaCreacion}">· Editado el
+                            <span th:if="${evento.fechaModificacion != evento.fechaCreacion}">
+                                · Editado el
                                 <span th:text="${#temporals.format(evento.fechaModificacion,'dd/MM/yyyy HH:mm')}"></span>
                             </span>
+
                         </p>
 
                     </div>
+
+                    <!-- ================= BOTONES ADMIN ================= -->
+
+                    <div class="mb-3 d-flex gap-2">
+
+                        <a th:if="${puedeEditar}"
+                           th:href="@{/eventos/{id}/edit(id=${evento.id})}"
+                           class="btn btn-outline-primary btn-sm">
+                            Editar evento
+                        </a>
+
+                        <form th:if="${puedeCancelar}"
+                              th:action="@{/eventos/{id}/cancel(id=${evento.id})}"
+                              method="post">
+
+                            <button class="btn btn-outline-warning btn-sm">
+                                Cancelar evento
+                            </button>
+
+                        </form>
+
+                        <form th:if="${puedeEliminar}"
+                              th:action="@{/eventos/{id}/delete(id=${evento.id})}"
+                              method="post">
+
+                            <button class="btn btn-outline-danger btn-sm"
+                                    onclick="return confirm('¿Eliminar este evento?')">
+                                Eliminar evento
+                            </button>
+
+                        </form>
+
+                    </div>
+
 
                     <div class="row">
 
@@ -148,29 +197,15 @@
                                 th:text="|Ubicación: ${evento.lugar.nombre}|">
                             </h6>
 
-
-                            <!-- ADMIN / ORGANIZADOR -->
-                            <a th:if="${usuario != null &&
-                   (esAdmin || usuario.id == evento.organizador.id)}"
-                               href="#"
-                               class="btn btn-outline-primary btn-sm w-100 mt-3">
-                                Estadísticas evento
-                            </a>
-
-
-                            <!-- YA INSCRITO -->
                             <button th:if="${estaInscrito}"
                                     class="btn btn-secondary btn-sm w-100 mt-3"
                                     disabled>
                                 Ya inscrito
                             </button>
 
-
-                            <!-- INSCRIBIRSE -->
                             <form th:if="${usuario != null && !estaInscrito &&
-                      !(esAdmin || usuario.id == evento.organizador.id) &&
-                      inscritos < evento.cupoMaximo &&
-                      !evento.termino}"
+              inscritos < evento.cupoMaximo &&
+              !evento.termino}"
                                   th:action="@{/eventos/{id}/inscribirse(id=${evento.id})}"
                                   method="post">
 
@@ -221,6 +256,7 @@
                 </div>
             </div>
 
+
             <!-- ================= COMENTARIOS ================= -->
             <div class="card shadow-sm">
                 <div class="card-body">
@@ -235,12 +271,24 @@
                     <div th:each="c : ${comentarios}" class="mb-3">
                         <div class="border rounded p-3">
 
-                            <p class="mb-1">
-                                <strong th:text="${usuarios.get(c.organizador.id).username}"></strong>
-                                <span class="text-muted small ms-2"
-                                      th:text="${#temporals.format(c.fecha,'dd/MM/yyyy HH:mm')}">
-</span>
-                            </p>
+                            <div class="d-flex align-items-center mb-2">
+
+                                <img th:src="${usuarios.get(c.autor.id).fotoDataUrl}"
+                                     class="comentario-avatar me-2"
+                                     alt="Autor comentario">
+
+                                <div>
+
+                                    <strong th:text="${usuarios.get(c.autor.id).username}">
+                                    </strong>
+
+                                    <div class="text-muted small"
+                                         th:text="${#temporals.format(c.fecha,'dd/MM/yyyy HH:mm')}">
+                                    </div>
+
+                                </div>
+
+                            </div>
 
                             <p th:text="${c.texto}"></p>
 

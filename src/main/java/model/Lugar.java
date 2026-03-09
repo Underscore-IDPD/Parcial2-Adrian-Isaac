@@ -16,6 +16,7 @@ public class Lugar {
     @Column(columnDefinition = "TEXT")
     private String fotoBase64;
     private String tipoImagen;
+    private boolean activo;
 
     @OneToMany
     private List<Evento> eventos;
@@ -29,6 +30,7 @@ public class Lugar {
         this.maxCapacidad = maxCapacidad;
         this.fotoBase64 = fotoBase64;
         this.tipoImagen = tipoImagen;
+        activo = true;
     }
 
     public String getFotoDataUrl() {
@@ -36,6 +38,18 @@ public class Lugar {
             return "/img/default-place.png";
         }
         return "data:" + tipoImagen + ";base64," + fotoBase64;
+    }
+
+    public boolean isActivo() {
+        return activo;
+    }
+
+    public void desactivar() {
+        activo = false;
+    }
+
+    public void activar() {
+        activo = true;
     }
 
     public String getNombre() {
@@ -68,5 +82,13 @@ public class Lugar {
 
     public void setTipoImagen(String tipoImagen) {
         this.tipoImagen = tipoImagen;
+    }
+
+    public Long getId() {
+        return id;
+    }
+
+    public void setId(Long id) {
+        this.id = id;
     }
 }

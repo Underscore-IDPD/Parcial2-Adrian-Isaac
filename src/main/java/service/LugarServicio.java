@@ -60,8 +60,21 @@ public class LugarServicio {
         return lugarRepositorio.buscarPorNombre(nombre,em);
     }
 
+    public void desactivarLugar(long id, EntityManager em){
+        Lugar u = lugarRepositorio.buscarPorId(id, em);
+        if (u == null) {
+            throw new RuntimeException("Lugar no encontrado");
+        }
+        u.desactivar();
+        em.getTransaction().begin();
+        lugarRepositorio.desactivar(u.getId(),em);
+        lugarRepositorio.actualizar(u,em);
+        em.getTransaction().commit();
+    }
+
     public void eliminarLugar(long id, EntityManager em) {
 
+        em.getTransaction().begin();
         try {
             Lugar u = lugarRepositorio.buscarPorId(id, em);
             if (u == null) {
@@ -80,7 +93,7 @@ public class LugarServicio {
         }
     }
 
-    public void modificarLugar(Long id, String nombre, int cantMax, String fotoBase64,
+    public boolean modificarLugar(Long id, String nombre, int cantMax, String fotoBase64,
                                  String tipoImagen, EntityManager em) {
         Lugar l = buscarPorId(id,em);
 
@@ -102,7 +115,9 @@ public class LugarServicio {
             em.getTransaction().begin();
             lugarRepositorio.actualizar(l, em);
             em.getTransaction().commit();
+            return true;
         }
+        return false;
     }
 
 }
