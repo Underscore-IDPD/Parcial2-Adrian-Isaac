@@ -137,17 +137,19 @@
 
                     <div class="mb-3 d-flex gap-2">
 
-                        <a th:if="${puedeEditar}"
+                        <a th:if="${puedeEditar and evento.estado.name() != 'Cancelado'}"
                            th:href="@{/eventos/{id}/edit(id=${evento.id})}"
                            class="btn btn-outline-primary btn-sm">
                             Editar evento
                         </a>
 
-                        <form th:if="${puedeCancelar}"
+                        <form th:if="${puedeCancelar and evento.estado.name() != 'Cancelado'}"
                               th:action="@{/eventos/{id}/cancel(id=${evento.id})}"
                               method="post">
 
-                            <button class="btn btn-outline-warning btn-sm">
+                            <input type="hidden" name="razon" class="razonOculta">
+
+                            <button type="button" onclick="razonCancelacion(this)" class="btn btn-outline-warning btn-sm">
                                 Cancelar evento
                             </button>
 
@@ -204,8 +206,8 @@
                             </button>
 
                             <form th:if="${usuario != null && !estaInscrito &&
-              inscritos < evento.cupoMaximo &&
-              !evento.termino}"
+                                          inscritos < evento.cupoMaximo &&
+                                          !evento.termino}"
                                   th:action="@{/eventos/{id}/inscribirse(id=${evento.id})}"
                                   method="post">
 
@@ -327,5 +329,19 @@
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/js/bootstrap.bundle.min.js"></script>
 
+<script>
+    function razonCancelacion(botonPresionado){
+        let razon = prompt('Razón de la cancelación:');
+
+        if(razon != null && razon.trim() != ""){
+            let formulario = botonPresionado.closest('form');
+
+            formulario.querySelector('.razonOculta').value = razon;
+            formulario.submit();
+        }else{
+            alert("Debes ingresar una razón para cancelar el evento")
+        }
+    }
+</script>
 </body>
 </html>

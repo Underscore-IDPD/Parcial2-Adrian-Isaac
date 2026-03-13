@@ -90,6 +90,11 @@ public class EventoServicio {
         if (e != null) {
             e.cancelarEvento(razon);
         }
+
+        em.getTransaction().begin();
+        eventoRepositorio.actualizar(e,em);
+        em.getTransaction().commit();
+        eliminarEtiquetasHuerfanas(em);
     }
 
     public Evento modificarEvento(Long id, String concepto, String descripcion, int cupoMaximo, int duracionMinutos, LocalDateTime fechaEvento, String etiquetas, Lugar lugar, EntityManager em) {

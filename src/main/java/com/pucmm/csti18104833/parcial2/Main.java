@@ -192,7 +192,9 @@ public class Main {
 
         usuarioServicio.crearUsuarioBase(em);
         lugarServicio.crearLugarBase(em);
-        crearDatosDePrueba(usuarioServicio, eventoServicio, lugarServicio, em);
+        if(usuarioRepositorio.listar(em).size() == 1){
+            crearDatosDePrueba(usuarioServicio, eventoServicio, lugarServicio, em);
+        }
         em.close();
 
 
