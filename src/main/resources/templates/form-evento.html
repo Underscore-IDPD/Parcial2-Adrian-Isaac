@@ -18,24 +18,38 @@
 
 <body class="bg-light">
 
-<nav class="navbar navbar-light bg-white shadow-sm mb-4">
-
+<body class="bg-light">
+<nav class="navbar navbar-expand-lg navbar-light bg-white shadow-sm mb-4">
     <div class="container">
 
         <a class="navbar-brand fw-bold" href="/">Lista de Eventos</a>
 
         <div class="d-flex align-items-center">
 
-            <img th:src="${usuario.fotoDataUrl}"
-                 class="rounded-circle me-2"
-                 style="width:35px;height:35px;object-fit:cover;">
+            <span class="me-3 d-flex align-items-center">
 
-            <strong th:text="${usuario.username}"></strong>
+                <!-- Foto -->
+                <img th:src="${usuarioActual.fotoDataUrl}"
+                     class="rounded-circle me-2"
+                     style="width:35px; height:35px; object-fit:cover;" />
+
+                <!-- Texto -->
+                Hola,
+                <strong class="ms-1"
+                        th:text="${usuarioActual.username}">
+                    Usuario
+                </strong>
+
+            </span>
+
+            <a href="/logout"
+               class="btn btn-outline-dark btn-sm">
+                Logout
+            </a>
 
         </div>
 
     </div>
-
 </nav>
 
 <div class="container">

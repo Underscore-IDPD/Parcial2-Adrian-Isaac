@@ -35,9 +35,13 @@ public class LugarControlador {
 
         app.routes.get("/lugares", this::listarLugares);
 
+        app.routes.get("/lugares/crear", this::crearLugarVisual);
+
         app.routes.get("/lugares/{id}", this::verLugar);
 
-        app.routes.get("/lugares/crear", this::crearLugarVisual);
+        app.routes.get("/lugares/{id}/edit", this::modificarLugarVisual);
+
+        app.routes.post("/lugares/{id}/edit", this::modificarLugar);
 
         app.routes.post("/lugares", this::crearLugar);
 
@@ -86,8 +90,8 @@ public class LugarControlador {
 
         HashMap<String,Object> modelo = new HashMap<>();
 
-        modelo.put("usuario", u);
-        modelo.put("error", error);
+        modelo.put("usuarioActual", u);
+        //modelo.put("error", error);
         modelo.put("errormsg", errormsg);
         modelo.put("lugar", null);
 
@@ -122,7 +126,7 @@ public class LugarControlador {
 
         modelo.put("modo","editar");
         modelo.put("lugar", l);
-        modelo.put("usuario", u);
+        modelo.put("usuarioActual", u);
         modelo.put("lugares", lugarServicio.listar(em));
 
         ctx.render("templates/form-lugar.html", modelo);
@@ -153,7 +157,7 @@ public class LugarControlador {
         if (archivo != null && archivo.size() > 0) {
 
             if (!archivo.contentType().startsWith("image/")) {
-                ctx.redirect("/usuarios/crear?error=1");
+                ctx.redirect("/lugares/crear?error=1");
                 return;
             }
 

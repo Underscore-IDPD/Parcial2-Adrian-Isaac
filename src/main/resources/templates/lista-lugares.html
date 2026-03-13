@@ -12,7 +12,7 @@
 <nav class="navbar navbar-light bg-white shadow-sm mb-4">
     <div class="container">
 
-        <a class="navbar-brand fw-bold" href="/">Lista de Articulos</a>
+        <a class="navbar-brand fw-bold" href="/">Lista de Eventos</a>
 
         <div class="d-flex align-items-center">
 
@@ -57,7 +57,7 @@
     <div class="d-flex justify-content-between align-items-center mb-4">
         <h2 class="mb-0 fw-bold text-dark">Gestión de Lugares</h2>
 
-        <a href="/usuarios/crear" class="btn btn-dark shadow-sm px-4">
+        <a href="/lugares/crear" class="btn btn-dark shadow-sm px-4">
             Registrar Lugar
         </a>
     </div>
@@ -101,12 +101,11 @@
                     <!-- ACCIONES -->
                     <td class="text-end pe-4">
 
-                        <form th:if="${!l.activo}"
-                              th:action="@{/lugares/{id}/edit(id=${l.id})}"
-                              method="post"
+                        <a th:if="${!l.activo}"
+                              th:href="@{/lugares/{id}/edit(id=${l.id})}"
                               class="btn btn-sm btn-outline-primary me-2">
                             Editar
-                        </form>
+                        </a>
 
                         <form th:if="${l.activo}"
                               th:action="@{/lugares/{id}/deactivate(id=${l.id})}"

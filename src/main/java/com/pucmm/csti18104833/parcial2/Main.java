@@ -1,4 +1,4 @@
-package com.pucmm.csti18104833.practica2;
+package com.pucmm.csti18104833.parcial2;
 
 import controller.EventoControlador;
 import controller.ComentarioControlador;
@@ -9,9 +9,6 @@ import io.javalin.Javalin;
 import io.javalin.http.staticfiles.Location;
 import io.javalin.rendering.template.JavalinThymeleaf;
 import jakarta.servlet.SessionTrackingMode;
-import org.thymeleaf.TemplateEngine;
-import org.thymeleaf.templatemode.TemplateMode;
-import org.thymeleaf.templateresolver.ClassLoaderTemplateResolver;
 import jakarta.persistence.EntityManager;
 import model.Evento;
 import model.Comentario;
@@ -20,8 +17,6 @@ import service.*;
 import util.Javanator;
 import util.Rol;
 
-import java.io.File;
-import java.io.IOException;
 import java.io.InputStream;
 import java.sql.Connection;
 import java.sql.DriverManager;
@@ -124,13 +119,13 @@ public class Main {
                 if (!authServicio.esAdmin(ctx)) ctx.redirect("/");
             });
 
-            config.routes.before("/articulos", ctx -> {
+            config.routes.before("/eventos", ctx -> {
                 if(!authServicio.esAdmin(ctx) && !authServicio.esAutor(ctx)){
                     ctx.redirect("/");
                 }
             });
 
-            config.routes.before("/articulos/*", ctx -> {
+            config.routes.before("/eventos/*", ctx -> {
                 if(ctx.path().matches("/articulos/\\d+") || ctx.path().contains("/etiqueta/")) {
                     return;
                 }
@@ -149,7 +144,7 @@ public class Main {
 
             });
 
-            config.routes.before("/articulos/{id}/*", ctx ->{
+            config.routes.before("/eventos/{id}/*", ctx ->{
                 if (authServicio.esAdmin(ctx) || ctx.path().endsWith("/comentarios") || ctx.path().contains("/etiqueta")) return;
 
                 long idArticulo = Long.parseLong(ctx.pathParam("id"));

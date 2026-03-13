@@ -7,7 +7,7 @@ group = 'org.example'
 version = '1.0-SNAPSHOT'
 
 application{
-    mainClass="com.pucmm.csti18104833.practica2.Main"
+    mainClass="com.pucmm.csti18104833.parcial2.Main"
 }
 
 repositories {

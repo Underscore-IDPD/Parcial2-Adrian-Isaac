@@ -131,7 +131,7 @@ public class EventoControlador {
 
         HashMap<String,Object> modelo = new HashMap<>();
 
-        modelo.put("usuario", u);
+        modelo.put("usuarioActual", u);
         modelo.put("error", error);
         modelo.put("errormsg", errormsg);
         modelo.put("evento", null);
