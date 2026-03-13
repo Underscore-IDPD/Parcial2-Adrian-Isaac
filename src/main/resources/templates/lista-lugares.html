@@ -125,9 +125,21 @@
                               class="d-inline">
 
                             <button type="submit"
-                                    class="btn btn-sm btn-outline-warning"
+                                    class="btn btn-sm btn-outline-warning me-2"
                                     onclick="return confirm('¿Reactivar lugar? (No se pueden realizar cambios a un lugar activo)');">
                                 Activar
+                            </button>
+                        </form>
+
+                        <form th:if="${!l.activo}"
+                              th:action="@{/lugares/{id}/delete(id=${l.id})}"
+                              method="post"
+                              class="d-inline">
+
+                            <button type="submit"
+                                    class="btn btn-sm btn-outline-danger me-2"
+                                    onclick="return confirm('¿Eliminar lugar?');">
+                                Eliminar
                             </button>
                         </form>
 

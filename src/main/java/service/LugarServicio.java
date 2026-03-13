@@ -73,8 +73,6 @@ public class LugarServicio {
     }
 
     public void eliminarLugar(long id, EntityManager em) {
-
-        em.getTransaction().begin();
         try {
             Lugar u = lugarRepositorio.buscarPorId(id, em);
             if (u == null) {

@@ -43,6 +43,8 @@ public class LugarControlador {
 
         app.routes.post("/lugares/{id}/edit", this::modificarLugar);
 
+        app.routes.post("/lugares/{id}/delete", this::eliminarLugar);
+
         app.routes.post("/lugares", this::crearLugar);
 
         app.routes.post("/lugares/{id}/deactivate", this::desactivarLugar);
@@ -225,7 +227,7 @@ public class LugarControlador {
         if (archivo != null && archivo.size() > 0) {
 
             if (!archivo.contentType().startsWith("image/")) {
-                ctx.redirect("/usuarios/crear?error=1");
+                ctx.redirect("/lugares/crear?error=1");
                 return;
             }
 
@@ -252,6 +254,26 @@ public class LugarControlador {
             ctx.redirect("/");
         else
             ctx.redirect("/lugares?error=1");
+    }
+
+    private void eliminarLugar(Context ctx) {
+
+        EntityManager em = ctx.attribute("em");
+
+        if(!authServicio.esAdmin(ctx)){
+            ctx.status(403);
+            return;
+        }
+
+        long id = Long.parseLong(ctx.pathParam("id"));
+
+        try {
+            lugarServicio.eliminarLugar(id, em);
+            ctx.redirect("/lugares");
+        } catch (RuntimeException e) {
+            e.printStackTrace();
+            ctx.status(404);
+        }
     }
 
 }
