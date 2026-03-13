@@ -6,6 +6,7 @@ import io.javalin.http.Context;
 import io.javalin.http.UploadedFile;
 import jakarta.persistence.EntityManager;
 import model.*;
+import org.jetbrains.annotations.NotNull;
 import service.*;
 
 import java.io.IOException;
@@ -43,6 +44,8 @@ public class EventoControlador {
         app.routes.post("/eventos/{id}/delete", this::eliminarEvento);
 
         app.routes.get("/eventos/{id}/edit", this::modificarEventoVisual);
+
+        app.routes.post("/eventos/{id}/cancel", this::cancelarEvento);
 
         app.routes.post("/eventos/{id}", this::modificarEvento);
 
@@ -176,7 +179,7 @@ public class EventoControlador {
 
         modelo.put("modo","editar");
         modelo.put("evento", e);
-        modelo.put("usuario", u);
+        modelo.put("usuarioActual", u);
         modelo.put("etiquetasTexto", etiquetasTexto);
         modelo.put("lugares", lugarServicio.listar(em));
 
