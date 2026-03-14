@@ -251,7 +251,7 @@ public class Main {
                 60,
                 admin,
                 ls.buscarPorId(1L,em),
-                LocalDateTime.of(2026,12,31,8,30,0),
+                LocalDateTime.of(2026,3,3,8,30,0),
                 "vaadin, java",
                 fotoBase64, tipoImagen,
                 em
