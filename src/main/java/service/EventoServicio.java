@@ -175,7 +175,35 @@ public class EventoServicio {
         return eventoRepositorio.contarInscritos(id,em);
     }
 
-    public boolean estaInscrito(Long uid, long id, EntityManager em) {
+    public boolean estaInscrito(long uid, long id, EntityManager em) {
         return eventoRepositorio.verificarInscripcion(uid,id,em);
+    }
+
+    public void sincronizarEstados(EntityManager em){
+        LocalDateTime ahora = LocalDateTime.now();
+        em.getTransaction().begin();
+        eventoRepositorio.sincronizar(ahora,em);
+        em.getTransaction().commit();
+
+        List<Evento> transcurriendo = eventoRepositorio.listarEstado(Estado.En_Transcurso,em);
+        for(Evento e: transcurriendo){
+            if(e.getLugar().getId() == 0L){
+                cancelarEvento(e.getId(), "No se asigno lugar a tiempo", em);
+            }
+        }
+    }
+
+    public boolean verificarAsistencia(Long uid, long id, EntityManager em) {
+        return eventoRepositorio.verificarAsistencia(uid,id,em);
+    }
+
+    public List<Evento> listarTodos(EntityManager em) {
+        return eventoRepositorio.listar(em);
+    }
+
+    public void desinscribirUsuario(Evento evento, Usuario usuario, EntityManager em) {
+        em.getTransaction().begin();
+        eventoRepositorio.desinscribir(usuario.getId(),evento.getId(),em);
+        em.getTransaction().commit();
     }
 }
