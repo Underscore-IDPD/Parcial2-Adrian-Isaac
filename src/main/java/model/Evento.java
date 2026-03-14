@@ -123,6 +123,10 @@ public class Evento {
         return estado;
     }
 
+    public void terminarEvento(){
+        this.estado = Estado.Concluido;
+    }
+
     public boolean termino(){
         return estado == Estado.Concluido;
     }

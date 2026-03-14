@@ -104,7 +104,7 @@ public class EventoRepositorio extends BaseRepositorio {
         for (Evento e : eventos) {
             LocalDateTime fin = e.getFechaEvento().plusMinutes(e.getDuracionMinutos());
             if (ahora.isAfter(fin)) {
-                e.actualizarEstado(Estado.Concluido);
+                e.terminarEvento();
                 em.merge(e);
             }
         }
