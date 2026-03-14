@@ -626,7 +626,7 @@ public class EventoControlador {
         String token = eventoServicio.inscribirUsuario(evento, usuario, em);
 
         try {
-            String urlQR = "http://localhost:7070/checkin/" + token;
+            String urlQR = token;
 
             String qrBase64 = QRUtil.generarQRBase64(urlQR);
 
