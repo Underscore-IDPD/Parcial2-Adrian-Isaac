@@ -3,6 +3,7 @@ package model;
 import jakarta.persistence.*;
 
 import java.time.LocalDateTime;
+import java.util.UUID;
 
 @Entity
 @Table(name = "eventos_asistentes")
@@ -21,6 +22,9 @@ public class Inscripcion {
     @JoinColumn(name = "usuario_id")
     private Usuario usuario;
 
+    @Column(unique = true, nullable = false)
+    private String token;
+
     private LocalDateTime fechaInscripcion;
 
     private boolean asistio = false;
@@ -36,6 +40,11 @@ public class Inscripcion {
                 evento.getId(),
                 usuario.getId()
         );
+        this.token = UUID.randomUUID().toString();
+    }
+
+    public String getToken(){
+        return token;
     }
 
     public InscripcionId getId() {

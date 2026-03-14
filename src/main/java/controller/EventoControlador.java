@@ -1,13 +1,13 @@
 package controller;
 
-import io.javalin.Javalin;
 import io.javalin.config.JavalinConfig;
 import io.javalin.http.Context;
 import io.javalin.http.UploadedFile;
 import jakarta.persistence.EntityManager;
 import model.*;
-import org.jetbrains.annotations.NotNull;
 import service.*;
+import util.Estado;
+import util.QRUtil;
 
 import java.io.IOException;
 import java.time.LocalDate;
@@ -49,9 +49,46 @@ public class EventoControlador {
 
         app.routes.post("/eventos/{id}", this::modificarEvento);
 
+        app.routes.post("/eventos/{id}/inscribirse", this::inscribirEvento);
+
         app.routes.get("/etiqueta/{nombre}", this::filtrarPorEtiqueta);
 
+        app.routes.get("/checkIn/{token}", this::checkIn);
 
+
+    }
+
+    private void checkIn(Context ctx) {
+        EntityManager em = ctx.attribute("em");
+
+        String token = ctx.pathParam("token");
+
+        Evento e = eventoServicio.buscarPorInscripcion(token,em);
+
+        if(e == null){
+            ctx.status(404);
+            return;
+        }
+
+        if(!authServicio.esCreador(ctx,e)){
+            ctx.status(403);
+            return;
+        }
+
+        if(e.termino()){
+            ctx.status(400);
+            return;
+        }
+
+        if(e.getEstado() != Estado.En_Transcurso){
+            ctx.status(400);
+            return;
+        }
+
+        boolean valid = eventoServicio.checkIn(token,em);
+
+        if(!valid) ctx.result("Ya se registro");
+        else ctx.result("Asistencia registrada");
     }
 
     private void index(Context ctx) {
@@ -252,8 +289,10 @@ public class EventoControlador {
             mapaUsuarios.put(u.getId(), u);
         }
 
-        int inscritos = e.getInscripciones().size();
+        int inscritos = eventoServicio.getInscritos(id,em);
         int cuposDisponibles = e.getCupoMaximo() - inscritos;
+
+        boolean estaInscrito = uid == null ? false : eventoServicio.estaInscrito(uid,id,em);
 
         modelo.put("evento", e);
         modelo.put("organizador", organizador);
@@ -436,6 +475,46 @@ public class EventoControlador {
             ctx.redirect("/eventos/" + e.getId());
         else
             ctx.redirect("/eventos?error=3");
+    }
+
+    public void inscribirEvento(Context ctx){
+
+        EntityManager em = ctx.attribute("em");
+
+        Long eventoId = Long.parseLong(ctx.pathParam("id"));
+        Evento evento = eventoServicio.buscarPorId(eventoId, em);
+
+        if(evento == null){
+            ctx.status(404);
+            return;
+        }
+
+        Long usuarioId = ctx.sessionAttribute("usuarioId");
+
+        if(usuarioId == null){
+            ctx.redirect("/login");
+            return;
+        }
+
+        Usuario usuario = usuarioServicio.buscarPorId(usuarioId, em);
+
+        String token = eventoServicio.inscribirUsuario(evento, usuario, em);
+
+        try {
+            String urlQR = "http://localhost:7070/checkin/" + token;
+
+            String qrBase64 = QRUtil.generarQRBase64(urlQR);
+
+            Map<String,Object> modelo = new HashMap<>();
+            modelo.put("evento", evento);
+            modelo.put("qr", qrBase64);
+
+            ctx.render("templates/qr-inscripcion.html", modelo);
+
+        } catch (Exception e) {
+            e.printStackTrace();
+            ctx.result("Error generando QR");
+        }
     }
 
 }

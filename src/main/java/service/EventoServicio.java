@@ -146,4 +146,36 @@ public class EventoServicio {
         etiquetaRepositorio.eliminarEtiquetasHuerfanas(em);
         em.getTransaction().commit();
     }
+
+    public String inscribirUsuario(Evento e, Usuario u, EntityManager em){
+        Inscripcion inscripcion = new Inscripcion(e, u);
+
+        em.getTransaction().begin();
+        em.persist(inscripcion);
+        em.getTransaction().commit();
+
+        return inscripcion.getToken();
+    }
+
+    public Evento buscarPorInscripcion(String token, EntityManager em) {
+        Inscripcion i = eventoRepositorio.buscarInscripcionPorToken(token,em);
+        if(i == null) return null;
+        return eventoRepositorio.buscarPorId(i.getEvento().getId(), em);
+    }
+
+    public boolean checkIn(String token, EntityManager em) {
+        Inscripcion i = eventoRepositorio.buscarInscripcionPorToken(token,em);
+        if(i.getAsistio()) return false;
+        i.marcarAsistio();
+        em.merge(i);
+        return true;
+    }
+
+    public int getInscritos(long id, EntityManager em) {
+        return eventoRepositorio.contarInscritos(id,em);
+    }
+
+    public boolean estaInscrito(Long uid, long id, EntityManager em) {
+        return eventoRepositorio.verificarInscripcion(uid,id,em);
+    }
 }
