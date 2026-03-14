@@ -60,7 +60,7 @@ public class EventoControlador {
 
         app.routes.get("/etiqueta/{nombre}", this::filtrarPorEtiqueta);
 
-        app.routes.get("/eventos/{id}/checkIn/{token}", this::checkIn);
+        app.routes.post("/eventos/{id}/checkIn/{token}", this::checkIn);
 
     }
 
