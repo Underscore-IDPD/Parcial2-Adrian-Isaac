@@ -272,6 +272,61 @@
                 </div>
             </div>
 
+            <div class="card mb-4">
+                <div class="card-header bg-white fw-bold">
+                    <i class="bi bi-graph-up text-primary me-2"></i>Resumen y Estadísticas
+                </div>
+                <div class="card-body">
+
+                    <div class="row text-center mb-4">
+                        <div class="col-md-4 mb-3 mb-md-0">
+                            <div class="card border-primary h-100">
+                                <div class="card-body">
+                                    <h6 class="card-title text-muted mb-2">Total Inscritos</h6>
+                                    <h2 class="text-primary mb-0" th:text="${inscritos}">0</h2>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-4 mb-3 mb-md-0">
+                            <div class="card border-success h-100">
+                                <div class="card-body">
+                                    <h6 class="card-title text-muted mb-2">Total Asistentes</h6>
+                                    <h2 class="text-success mb-0" th:text="${asistentes}">0</h2>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="card border-info h-100">
+                                <div class="card-body">
+                                    <h6 class="card-title text-muted mb-2">Porcentaje Asistencia</h6>
+                                    <h2 class="text-info mb-0" th:text="${porcentajeAsistencia} + '%'">0%</h2>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-6 mb-4 mb-md-0">
+                            <h6 class="text-center text-muted mb-3">Inscripciones por día</h6>
+
+                            <div style="position: relative; height: 250px; width: 100%;">
+                                <canvas id="graficoInscripciones"></canvas>
+                            </div>
+
+                        </div>
+                        <div class="col-md-6">
+                            <h6 class="text-center text-muted mb-3">Asistencia por hora</h6>
+
+                            <div style="position: relative; height: 250px; width: 100%;">
+                                <canvas id="graficoAsistencia"></canvas>
+                            </div>
+
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+
 
             <!-- ================= COMENTARIOS ================= -->
             <div class="card shadow-sm">
@@ -356,6 +411,56 @@
             alert("Debes ingresar una razón para cancelar el evento")
         }
     }
+</script>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+<script th:inline="javascript">
+    document.addEventListener("DOMContentLoaded", function() {
+
+        // 1. Recibir los datos desde el controlador de Java
+        // Thymeleaf convertirá automáticamente tus List<String> o List<Integer> de Java en arrays de JS.
+        // Los valores por defecto (ej. ['Lun', 'Mar']) se usarán si la variable de Java viene nula.
+
+        const labelsDias = /*[[${labelsDias}]]*/ ['Lun', 'Mar', 'Mie', 'Jue', 'Vie'];
+        const datosInscritos = /*[[${datosInscritos}]]*/ [5, 12, 8, 20, 15];
+
+        const labelsHoras = /*[[${labelsHoras}]]*/ ['08:00', '09:00', '10:00', '11:00'];
+        const datosAsistencia = /*[[${datosAsistencia}]]*/ [10, 45, 20, 5];
+
+        const ctxInscripciones = document.getElementById('graficoInscripciones').getContext('2d');
+        new Chart(ctxInscripciones, {
+            type: 'line',
+            data: {
+                labels: labelsDias,
+                datasets: [{
+                    label: 'Nuevos inscritos',
+                    data: datosInscritos,
+                    borderColor: '#0d6efd',
+                    backgroundColor: 'rgba(13, 110, 253, 0.1)',
+                    borderWidth: 2,
+                    fill: true,
+                    tension: 0.3 // Suaviza las curvas de la línea
+                }]
+            },
+            options: { responsive: true, maintainAspectRatio: false }
+        });
+
+        const ctxAsistencia = document.getElementById('graficoAsistencia').getContext('2d');
+        new Chart(ctxAsistencia, {
+            type: 'bar',
+            data: {
+                labels: labelsHoras,
+                datasets: [{
+                    label: 'Personas que asistieron',
+                    data: datosAsistencia,
+                    backgroundColor: '#198754',
+                    borderRadius: 4
+                }]
+            },
+            options: { responsive: true, maintainAspectRatio: false }
+        });
+    });
 </script>
 </body>
 </html>

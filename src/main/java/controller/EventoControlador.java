@@ -262,6 +262,9 @@ public class EventoControlador {
         modelo.put("usuario", usuarioSesion);
 
         modelo.put("inscritos", inscritos);
+        //modelo.put("asistentes", asistentes);
+        //float porcentajeAsistencia = (float) (asistentes / inscritos) * 100;
+        //modelo.put("porcentajeAsistencia",porcentajeAsistencia);
         modelo.put("cuposDisponibles", cuposDisponibles);
 
         modelo.put("puedeEditar",
