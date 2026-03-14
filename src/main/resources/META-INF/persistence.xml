@@ -1,7 +1,7 @@
 <persistence xmlns="https://jakarta.ee/xml/ns/persistence"
              version="3.0">
 
-    <persistence-unit name="evenyPU">
+    <persistence-unit name="eventPU">
 
         <provider>org.hibernate.jpa.HibernatePersistenceProvider</provider>
 
