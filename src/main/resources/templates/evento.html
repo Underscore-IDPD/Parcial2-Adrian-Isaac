@@ -420,11 +420,11 @@
     document.addEventListener("DOMContentLoaded", function() {
 
         // Valores por defecto (No representan nada)
-        const labelsDias = ['Lun', 'Mar', 'Mie', 'Jue', 'Vie', 'Sab', 'Dom'];
-        const datosInscritos = [0, 0, 0, 0, 0, 0, 0];
+        const labelsDias = /*[[${labelsDias}]]*/ ['Lun', 'Mar', 'Mie', 'Jue', 'Vie', 'Sab', 'Dom'];
+        const datosInscritos = /*[[${datosInscritos}]]*/ [0, 0, 0, 0, 0, 0, 0];
 
-        const labelsHoras = ['08:00', '09:00', '10:00', '11:00'];
-        const datosAsistencia =[0, 0, 0, 0];
+        const labelsHoras = /*[[${labelsHoras}]]*/ ['08:00', '09:00', '10:00', '11:00'];
+        const datosAsistencia = /*[[${datosAsistencia}]]*/ [0, 0, 0, 0];
 
         const ctxInscripciones = document.getElementById('graficoInscripciones').getContext('2d');
         new Chart(ctxInscripciones, {
