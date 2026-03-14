@@ -177,7 +177,7 @@ public class EventoServicio {
 
     public boolean checkIn(String token, EntityManager em) {
         Inscripcion i = eventoRepositorio.buscarInscripcionPorToken(token,em);
-        if(i.getAsistio()) return false;
+        if(i == null || i.getAsistio()) return false;
         em.getTransaction().begin();
         i.marcarAsistio();
         em.getTransaction().commit();
