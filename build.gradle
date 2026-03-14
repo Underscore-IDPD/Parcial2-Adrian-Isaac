@@ -1,6 +1,7 @@
 plugins {
     id 'java'
     id 'application'
+    id 'io.github.goooler.shadow' version '8.1.8'
 }
 
 group = 'org.example'
@@ -33,6 +34,18 @@ dependencies {
     implementation 'jakarta.persistence:jakarta.persistence-api:3.1.0'
     implementation 'org.jasypt:jasypt:1.9.3'
     implementation 'org.postgresql:postgresql:42.7.3'
+}
+
+jar {
+    manifest {
+        attributes 'Main-Class': 'com.pucmm.csti18104833.parcial2.Main'
+    }
+}
+
+shadowJar {
+    archiveBaseName.set('event')
+    archiveClassifier.set('')
+    archiveVersion.set('')
 }
 
 test {

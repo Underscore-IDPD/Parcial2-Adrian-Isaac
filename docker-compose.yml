@@ -1,0 +1,11 @@
+services:
+  app:
+    build: .
+    ports:
+      - "80:7070"
+    volumes:
+      - event-data:/data
+    restart: unless-stopped
+
+volumes:
+  event-data:
