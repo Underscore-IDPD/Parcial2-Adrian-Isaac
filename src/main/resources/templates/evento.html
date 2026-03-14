@@ -272,6 +272,7 @@
                 </div>
             </div>
 
+            <!-- ================= ESTADISTICAS ================= -->
             <div class="card mb-4">
                 <div class="card-header bg-white fw-bold">
                     <i class="bi bi-graph-up text-primary me-2"></i>Resumen y Estadísticas
@@ -283,7 +284,7 @@
                             <div class="card border-primary h-100">
                                 <div class="card-body">
                                     <h6 class="card-title text-muted mb-2">Total Inscritos</h6>
-                                    <h2 class="text-primary mb-0" th:text="${inscritos}">0</h2>
+                                    <h2 class="text-primary mb-0" th:text="${totalInscritos}">0</h2>
                                 </div>
                             </div>
                         </div>
@@ -291,7 +292,7 @@
                             <div class="card border-success h-100">
                                 <div class="card-body">
                                     <h6 class="card-title text-muted mb-2">Total Asistentes</h6>
-                                    <h2 class="text-success mb-0" th:text="${asistentes}">0</h2>
+                                    <h2 class="text-success mb-0" th:text="${totalAsistentes}">0</h2>
                                 </div>
                             </div>
                         </div>
@@ -418,15 +419,12 @@
 <script th:inline="javascript">
     document.addEventListener("DOMContentLoaded", function() {
 
-        // 1. Recibir los datos desde el controlador de Java
-        // Thymeleaf convertirá automáticamente tus List<String> o List<Integer> de Java en arrays de JS.
-        // Los valores por defecto (ej. ['Lun', 'Mar']) se usarán si la variable de Java viene nula.
+        // Valores por defecto (No representan nada)
+        const labelsDias = ['Lun', 'Mar', 'Mie', 'Jue', 'Vie', 'Sab', 'Dom'];
+        const datosInscritos = [0, 0, 0, 0, 0, 0, 0];
 
-        const labelsDias = /*[[${labelsDias}]]*/ ['Lun', 'Mar', 'Mie', 'Jue', 'Vie'];
-        const datosInscritos = /*[[${datosInscritos}]]*/ [5, 12, 8, 20, 15];
-
-        const labelsHoras = /*[[${labelsHoras}]]*/ ['08:00', '09:00', '10:00', '11:00'];
-        const datosAsistencia = /*[[${datosAsistencia}]]*/ [10, 45, 20, 5];
+        const labelsHoras = ['08:00', '09:00', '10:00', '11:00'];
+        const datosAsistencia =[0, 0, 0, 0];
 
         const ctxInscripciones = document.getElementById('graficoInscripciones').getContext('2d');
         new Chart(ctxInscripciones, {
@@ -440,10 +438,22 @@
                     backgroundColor: 'rgba(13, 110, 253, 0.1)',
                     borderWidth: 2,
                     fill: true,
-                    tension: 0.3 // Suaviza las curvas de la línea
+                    tension: 0.3
                 }]
             },
-            options: { responsive: true, maintainAspectRatio: false }
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        min: 0,
+                        ticks: {
+                            stepSize: 1
+                        }
+                    }
+                }
+            }
         });
 
         const ctxAsistencia = document.getElementById('graficoAsistencia').getContext('2d');
@@ -458,7 +468,19 @@
                     borderRadius: 4
                 }]
             },
-            options: { responsive: true, maintainAspectRatio: false }
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        min: 0,
+                        ticks: {
+                            stepSize: 1
+                        }
+                    }
+                }
+            }
         });
     });
 </script>

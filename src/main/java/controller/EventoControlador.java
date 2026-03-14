@@ -13,6 +13,7 @@ import java.io.IOException;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
+import java.time.format.DateTimeFormatter;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -289,8 +290,42 @@ public class EventoControlador {
             mapaUsuarios.put(u.getId(), u);
         }
 
-        int inscritos = eventoServicio.getInscritos(id,em);
-        int cuposDisponibles = e.getCupoMaximo() - inscritos;
+        List<Inscripcion> inscripciones = eventoServicio.listaInscritos(id,em);
+        int totalInscritos = eventoServicio.getInscritos(id,em);
+        long totalAsistentes = inscripciones.stream().filter(Inscripcion::getAsistio).count();
+
+        int porcentajeAsistencia = 0;
+        if (totalInscritos > 0) {
+            porcentajeAsistencia = (int) Math.round(((double) totalAsistentes / totalInscritos) * 100);
+        }
+
+        Map<LocalDate, Long> inscripcionesPorDia = inscripciones.stream()
+                .filter(i -> i.getFechaInscripcion() != null)
+                .collect(Collectors.groupingBy(i -> i.getFechaInscripcion().toLocalDate(),
+                        TreeMap::new,
+                        Collectors.counting()
+                ));
+
+        List<String> labelsDias = inscripcionesPorDia.keySet().stream()
+                .map(fecha -> fecha.format(DateTimeFormatter.ofPattern("dd/MM")))
+                .collect(Collectors.toList());
+        List<Long> datosInscritos = new ArrayList<>(inscripcionesPorDia.values());
+
+        Map<Integer, Long> asistenciasPorHora = inscripciones.stream()
+                .filter(Inscripcion::getAsistio).filter(i -> i.getFechaAsistencia() != null)
+                .collect(Collectors.groupingBy(
+                        i -> i.getFechaAsistencia().getHour(),
+                        TreeMap::new,
+                        Collectors.counting()
+                ));
+
+
+        List<String> labelsHoras = asistenciasPorHora.keySet().stream()
+                .map(hora -> String.format("%02d:00", hora))
+                .collect(Collectors.toList());
+        List<Long> datosAsistencia = new ArrayList<>(asistenciasPorHora.values());
+
+        int cuposDisponibles = e.getCupoMaximo() - totalInscritos;
 
         boolean estaInscrito = uid == null ? false : eventoServicio.estaInscrito(uid,id,em);
 
@@ -300,10 +335,13 @@ public class EventoControlador {
         modelo.put("usuarios", mapaUsuarios);
         modelo.put("usuario", usuarioSesion);
 
-        modelo.put("inscritos", inscritos);
-        //modelo.put("asistentes", asistentes);
-        //float porcentajeAsistencia = (float) (asistentes / inscritos) * 100;
-        //modelo.put("porcentajeAsistencia",porcentajeAsistencia);
+        modelo.put("totalInscritos", totalInscritos);
+        modelo.put("totalAsistentes", totalAsistentes);
+        modelo.put("porcentajeAsistencia",porcentajeAsistencia);
+        modelo.put("labelsDias",labelsDias);
+        modelo.put("datosInscritos", datosInscritos);
+        modelo.put("labelsHoras",labelsHoras);
+        modelo.put("datosAsistencia", datosAsistencia);
         modelo.put("cuposDisponibles", cuposDisponibles);
 
         modelo.put("puedeEditar",

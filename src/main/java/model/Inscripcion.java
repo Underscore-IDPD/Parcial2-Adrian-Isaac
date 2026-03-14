@@ -28,6 +28,7 @@ public class Inscripcion {
     private LocalDateTime fechaInscripcion;
 
     private boolean asistio = false;
+    private LocalDateTime fechaAsistencia;
 
     public Inscripcion() {}
 
@@ -63,11 +64,14 @@ public class Inscripcion {
         return fechaInscripcion;
     }
 
+    public LocalDateTime getFechaAsistencia() { return fechaAsistencia; }
+
     public boolean getAsistio() {
         return asistio;
     }
 
     public void marcarAsistio() {
         asistio = true;
+        fechaAsistencia = LocalDateTime.now();
     }
 }

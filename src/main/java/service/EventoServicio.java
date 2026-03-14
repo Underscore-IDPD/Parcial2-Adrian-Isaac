@@ -178,4 +178,8 @@ public class EventoServicio {
     public boolean estaInscrito(Long uid, long id, EntityManager em) {
         return eventoRepositorio.verificarInscripcion(uid,id,em);
     }
+
+    public List<Inscripcion> listaInscritos(long id, EntityManager em){
+        return  eventoRepositorio.listarInscripciones(id,em);
+    }
 }

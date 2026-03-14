@@ -36,7 +36,7 @@ public class EventoRepositorio extends BaseRepositorio {
 
     public int contarInscritos(Long id, EntityManager em){
         return em.createQuery(
-                        "SELECT COUNT i FROM Inscripcion i WHERE i.evento.id = :id ", Inscripcion.class)
+                        "SELECT COUNT (i) FROM Inscripcion i WHERE i.evento.id = :id ", Inscripcion.class)
                 .setParameter("id", id).getFirstResult();
     }
 
@@ -74,9 +74,16 @@ public class EventoRepositorio extends BaseRepositorio {
 
     public boolean verificarInscripcion(Long uid, long id, EntityManager em) {
         return em.createQuery(
-                        "SELECT COUNT i FROM Inscripcion i WHERE i.evento.id = :id AND i.usuario = uid ", Inscripcion.class)
+                        "SELECT COUNT (i) FROM Inscripcion i WHERE i.evento.id = :id AND i.usuario.id = :uid ", Inscripcion.class)
                 .setParameter("id", id)
                 .setParameter("uid",uid)
                 .getFirstResult() == 1;
+    }
+
+    public List<Inscripcion> listarInscripciones(long id,EntityManager em){
+        return em.createQuery(
+                        "SELECT i FROM Inscripcion i WHERE i.evento.id = :idEvento", Inscripcion.class)
+                .setParameter("idEvento", id)
+                .getResultList();
     }
 }
