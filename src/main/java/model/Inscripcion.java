@@ -66,6 +66,14 @@ public class Inscripcion {
 
     public LocalDateTime getFechaAsistencia() { return fechaAsistencia; }
 
+    public void setFechaInscripcion(LocalDateTime fechaInscripcion) {
+        this.fechaInscripcion = fechaInscripcion;
+    }
+
+    public void setFechaAsistencia(LocalDateTime fechaAsistencia) {
+        this.fechaAsistencia = fechaAsistencia;
+    }
+
     public boolean getAsistio() {
         return asistio;
     }

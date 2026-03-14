@@ -12,6 +12,7 @@ import jakarta.servlet.SessionTrackingMode;
 import jakarta.persistence.EntityManager;
 import model.Evento;
 import model.Comentario;
+import model.Inscripcion;
 import model.Usuario;
 import service.*;
 import util.Javanator;
@@ -24,6 +25,7 @@ import java.sql.SQLException;
 import java.time.LocalDateTime;
 import java.util.Base64;
 
+import java.util.Random;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
@@ -239,26 +241,49 @@ public class Main {
                 em
         );
 
-        fotoBase64 = imagenBase64DesdeResources("therian-sociedad.jpg");
+        fotoBase64 = imagenBase64DesdeResources("default-banner.png");
         tipoImagen = "image/jpg";
 
         es.crearEvento(
-                "Junte Therian PUCMM",
-                "Junte para todos los therian pucmm! Meow!",
+                "Charla sobre Vaadin",
+                "Vaadin es lo mejor",
                 60,
                 60,
                 admin,
                 ls.buscarPorId(1L,em),
                 LocalDateTime.of(2026,12,31,8,30,0),
-                "furro, therian, wady",
+                "vaadin, java",
                 fotoBase64, tipoImagen,
                 em
         );
+        Evento evento = em.find(Evento.class, 1L);
 
-        System.out.println(
-                em.createQuery("SELECT u.username FROM Usuario u WHERE u.id = 0L", Long.class)
-                        .getSingleResult()
-        );
+        Random random = new Random();
+
+        try {
+            for (int ind = 1; ind <= 30; ind++) {
+                Usuario estudiante = us.crearUsuario(
+                        "estudiante" + ind, "1234", Rol.Participante, "", "", em);
+
+                Inscripcion inscripcion = new Inscripcion(evento, estudiante);
+
+                int diasAntes = random.nextInt(15) + 1;
+                inscripcion.setFechaInscripcion(evento.getFechaEvento().minusDays(diasAntes));
+
+                if (random.nextInt(100) < 80) {
+                    inscripcion.marcarAsistio();
+
+                    int minutosVariacion = random.nextInt(120) - 60;
+                    inscripcion.setFechaAsistencia(evento.getFechaEvento().plusMinutes(minutosVariacion));
+                }
+
+                em.persist(inscripcion);
+            }
+
+        } catch (Exception e) {
+            if (em.getTransaction().isActive()) em.getTransaction().rollback();
+            e.printStackTrace();
+        }
     }
 
     public static void probarConexion() {
