@@ -16,7 +16,7 @@
 
             <!-- H2 -->
             <property name="jakarta.persistence.jdbc.url"
-                      value="jdbc:h2:tcp://localhost:9092/~/evenydb"/>
+                      value="jdbc:h2:tcp://localhost:9092/~/eventdb"/>
 
             <property name="jakarta.persistence.jdbc.driver"
                       value="org.h2.Driver"/>

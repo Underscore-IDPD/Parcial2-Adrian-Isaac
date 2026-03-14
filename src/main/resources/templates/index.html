@@ -1,10 +1,9 @@
 <!DOCTYPE html>
-<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<html lang="es" xmlns:th="http://www.thymeleaf.org">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css"
-          rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="/css/estilo.css">
     <script src="https://unpkg.com/htmx.org@1.9.12"></script>
     <title>Inicio</title>
@@ -14,173 +13,220 @@
 
 <nav class="navbar navbar-light bg-white shadow-sm mb-4">
     <div class="container">
-
         <a class="navbar-brand fw-bold" href="/">Lista de Eventos</a>
-
         <div class="d-flex align-items-center">
-
-            <!-- Si NO está loggeado -->
-            <a th:if="${usuario == null}"
-               href="/login"
-               class="btn btn-outline-dark">
-                Login
-            </a>
-
-            <!-- Si está loggeado -->
-            <div th:if="${usuario != null}"
-                 class="d-flex align-items-center">
-
-                <!-- Foto -->
-                <img th:src="${usuario.fotoDataUrl}"
-                     class="rounded-circle me-2"
-                     style="width:35px; height:35px; object-fit:cover;" />
-
-                <!-- Username -->
-                <span>Hola,
-                <strong class="me-3"
-                        th:text="${usuario.username}">
-                </strong>
-                </span>
-
-                <!-- Logout -->
-                <a href="/logout"
-                   class="btn btn-outline-dark btn-sm">
-                    Logout
-                </a>
-
+            <a th:if="${usuario == null}" href="/login" class="btn btn-outline-dark">Login</a>
+            <div th:if="${usuario != null}" class="d-flex align-items-center">
+                <img th:src="${usuario.fotoDataUrl}" class="rounded-circle me-2"
+                     style="width:35px;height:35px;object-fit:cover;"/>
+                <span>Hola, <strong class="me-3" th:text="${usuario.username}"></strong></span>
+                <a href="/logout" class="btn btn-outline-dark btn-sm">Logout</a>
             </div>
-
         </div>
-
     </div>
 </nav>
 
 <div class="container">
-    <div class="row">
 
-        <!-- COLUMNA PRINCIPAL -->
-        <div class="col-md-9">
+    <!-- TABS -->
+    <ul class="nav nav-tabs mb-4" id="eventosTabs" role="tablist">
+        <li class="nav-item" role="presentation">
+            <button class="nav-link active" id="todos-tab" data-bs-toggle="tab"
+                    data-bs-target="#todos" type="button" role="tab">
+                Eventos
+            </button>
+        </li>
+        <li class="nav-item" th:if="${usuario != null}" role="presentation">
+            <button class="nav-link" id="inscritos-tab" data-bs-toggle="tab"
+                    data-bs-target="#inscritos" type="button" role="tab">
+                Mis Inscripciones
+            </button>
+        </li>
+        <li class="nav-item"
+            th:if="${usuario != null and usuario.rol.name() != 'Participante'}"
+            role="presentation">
+            <button class="nav-link" id="organizados-tab" data-bs-toggle="tab"
+                    data-bs-target="#organizados" type="button" role="tab">
+                Mis Eventos
+            </button>
+        </li>
+    </ul>
 
-            <div class="d-flex justify-content-between align-items-center mb-3">
-                <h3>Eventos</h3>
+    <div class="tab-content">
 
-                <div class="d-flex">
-                    <!-- BOTÓN CREAR USUARIO -->
-                    <a th:if="${usuario != null and usuario.rol.name == 'Administrador'}"
-                       href="/usuarios"
-                       class="btn btn-sm btn-dark me-2"->
-                        Usuarios
-                    </a>
+        <!-- ===== TAB TODOS ===== -->
+        <div class="tab-pane fade show active" id="todos" role="tabpanel">
+            <div class="row">
 
-                    <!-- BOTÓN CREAR LUGAR -->
-                    <a th:if="${usuario != null and usuario.rol.name == 'Administrador'}"
-                       href="/lugares"
-                       class="btn btn-sm btn-dark me-2">
-                        Lugares
-                    </a>
+                <!-- Columna principal -->
+                <div class="col-md-9">
+                    <div class="d-flex justify-content-between align-items-center mb-3">
+                        <h3>Eventos</h3>
+                        <div class="d-flex gap-2">
+                            <a th:if="${usuario != null and usuario.rol.name() == 'Administrador'}"
+                               href="/usuarios" class="btn btn-sm btn-dark">Usuarios</a>
+                            <a th:if="${usuario != null and usuario.rol.name() == 'Administrador'}"
+                               href="/lugares" class="btn btn-sm btn-dark">Lugares</a>
+                            <a th:if="${usuario != null and usuario.rol.name() != 'Participante'}"
+                               href="/eventos/" class="btn btn-sm btn-primary">Nuevo Evento</a>
+                        </div>
+                    </div>
 
-                    <!-- BOTÓN CREAR EVENTO -->
-                    <a th:if="${usuario != null and usuario.rol.name() != 'Participante'}"
-                       href="/eventos/"
-                       class="btn btn-primary btn-sm">
-                        Nuevo Evento
-                    </a>
-                </div>
-
-            </div>
-
-            <!-- MENSAJE SI NO HAY EVENTOS -->
-            <p th:if="${#lists.isEmpty(eventos)}"
-               class="text-muted">
-                No hay eventos publicados.
-            </p>
-
-            <!-- LISTADO DE EVENTOS -->
-            <div class="card mb-4 shadow-sm"
-                 th:each="a : ${eventos}">
-                <div class="card-body">
-
-                    <h2 class="card-title h4">
-                        <span th:text="${a.concepto}">Concepto</span>
-                        <span th:if="${a.estado != null and a.estado.name() == 'Cancelado'}"
-                              class="text-danger fw-bold ms-2" style="font-size: 0.7em;">
-                            (Cancelado)
-                        </span>
-                    </h2>
-
-                    <p class="small text-muted">
-                        Por
-                        <span th:text="${usuarios.get(a.organizador.id).username}">
-                            Organizador
-                        </span>
-                        <span th:text="${#temporals.format(a.fechaEvento, 'dd/MM/yyyy HH:mm')}">
-                            Fecha
-                        </span>
-                    </p>
-
-                    <p class="card-text"
-                       th:text="${#strings.abbreviate(#strings.arraySplit(a.descripcion, '|||')[0], 73)}">
-                    </p>
-
-                    <!-- ETIQUETAS DEL EVENTO -->
-                    <div class="mb-3">
-                        <a th:each="e : ${a.etiquetas}"
-                           th:href="@{/etiqueta/{nombre}(nombre=${e.nombre})}"
-                           class="badge bg-dark text-decoration-none me-1"
-                           th:text="${e.nombre}">
+                    <!-- Filtros de estado -->
+                    <div class="btn-group mb-3" role="group">
+                        <a th:href="@{/}"
+                           class="btn btn-sm"
+                           th:classappend="${estadoFiltro == ''} ? 'btn-dark' : 'btn-outline-dark'">
+                            Todos
+                        </a>
+                        <a th:href="@{/(estado='Pendiente')}"
+                           class="btn btn-sm"
+                           th:classappend="${estadoFiltro == 'Pendiente'} ? 'btn-dark' : 'btn-outline-dark'">
+                            Pendientes
+                        </a>
+                        <a th:href="@{/(estado='En_Transcurso')}"
+                           class="btn btn-sm"
+                           th:classappend="${estadoFiltro == 'En_Transcurso'} ? 'btn-dark' : 'btn-outline-dark'">
+                            En Transcurso
+                        </a>
+                        <a th:href="@{/(estado='Concluido')}"
+                           class="btn btn-sm"
+                           th:classappend="${estadoFiltro == 'Concluido'} ? 'btn-dark' : 'btn-outline-dark'">
+                            Concluidos
+                        </a>
+                        <a th:href="@{/(estado='Cancelado')}"
+                           class="btn btn-sm"
+                           th:classappend="${estadoFiltro == 'Cancelado'} ? 'btn-dark' : 'btn-outline-dark'">
+                            Cancelados
                         </a>
                     </div>
 
-                    <a th:href="@{/eventos/{id}(id=${a.id})}"
-                       class="btn btn-outline-primary btn-sm">
-                        Leer más
-                    </a>
+                    <p th:if="${#lists.isEmpty(eventos)}" class="text-muted">No hay eventos.</p>
 
+                    <div class="card mb-4 shadow-sm" th:each="a : ${eventos}">
+                        <div class="card-body">
+                            <h2 class="card-title h4">
+                                <span th:text="${a.concepto}"></span>
+                                <span th:if="${a.estado != null and a.estado.name() == 'Cancelado'}"
+                                      class="text-danger fw-bold ms-2" style="font-size:0.7em;">(Cancelado)</span>
+                            </h2>
+                            <p class="small text-muted">
+                                Por <span th:text="${usuarios.get(a.organizador.id).username}"></span>
+                                — <span th:text="${#temporals.format(a.fechaEvento, 'dd/MM/yyyy HH:mm')}"></span>
+                            </p>
+                            <p class="card-text"
+                               th:text="${#strings.abbreviate(#strings.arraySplit(a.descripcion, '|||')[0], 73)}"></p>
+                            <div class="mb-3">
+                                <a th:each="e : ${a.etiquetas}"
+                                   th:href="@{/etiqueta/{nombre}(nombre=${e.nombre})}"
+                                   class="badge bg-dark text-decoration-none me-1"
+                                   th:text="${e.nombre}"></a>
+                            </div>
+                            <a th:href="@{/eventos/{id}(id=${a.id})}"
+                               class="btn btn-outline-primary btn-sm">Leer más</a>
+                        </div>
+                    </div>
+
+                    <!-- Paginación -->
+                    <nav th:if="${totalPaginas > 1}" class="mt-5 mb-4">
+                        <ul class="pagination justify-content-center">
+                            <li class="page-item" th:classappend="${paginaActual == 0} ? 'disabled'">
+                                <a class="page-link"
+                                   th:href="@{/(pagina=${paginaActual - 1}, estado=${estadoFiltro})}">Anterior</a>
+                            </li>
+                            <li class="page-item"
+                                th:each="i : ${#numbers.sequence(inicioRango, finRango)}"
+                                th:classappend="${paginaActual == i} ? 'active'">
+                                <a class="page-link"
+                                   th:href="@{/(pagina=${i}, estado=${estadoFiltro})}"
+                                   th:text="${i + 1}"></a>
+                            </li>
+                            <li class="page-item"
+                                th:classappend="${paginaActual == (totalPaginas - 1)} ? 'disabled'">
+                                <a class="page-link"
+                                   th:href="@{/(pagina=${paginaActual + 1}, estado=${estadoFiltro})}">Siguiente</a>
+                            </li>
+                        </ul>
+                    </nav>
                 </div>
+
+                <!-- Sidebar etiquetas -->
+                <div class="col-md-3">
+                    <div class="p-4 bg-white rounded shadow-sm">
+                        <h4 class="mb-3">Etiquetas</h4>
+                        <div class="d-flex flex-wrap">
+                            <a th:each="e : ${etiquetas}"
+                               th:href="@{/etiqueta/{nombre}(nombre=${e.nombre})}"
+                               class="badge bg-dark text-decoration-none p-2 m-1"
+                               th:text="${e.nombre}"></a>
+                            <p th:if="${#lists.isEmpty(etiquetas)}" class="text-muted small">
+                                No se encontraron etiquetas.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+
             </div>
-
-            <nav aria-label="Navegación de eventos" class="mt-5 mb-4" th:if="${totalPaginas > 1}">
-                <ul class="pagination justify-content-center">
-
-                    <li class="page-item" th:classappend="${paginaActual == 0} ? 'disabled'">
-                        <a class="page-link" th:href="@{/(pagina=${paginaActual - 1})}" tabindex="-1">Anterior</a>
-                    </li>
-
-                    <li class="page-item" th:each="i : ${#numbers.sequence(inicioRango, finRango)}"
-                        th:classappend="${paginaActual == i} ? 'active'">
-                        <a class="page-link" th:href="@{/(pagina=${i})}" th:text="${i + 1}">1</a>
-                    </li>
-
-                    <li class="page-item" th:classappend="${paginaActual == (totalPaginas - 1)} ? 'disabled'">
-                        <a class="page-link" th:href="@{/(pagina=${paginaActual + 1})}">Siguiente</a>
-                    </li>
-
-                </ul>
-            </nav>
-
         </div>
 
-        <!-- SIDEBAR -->
-        <div class="col-md-3">
-            <div class="p-4 mb-3 bg-white rounded shadow-sm">
-
-                <h4 class="mb-3">Etiquetas</h4>
-
-                <div class="d-flex flex-wrap">
-
-                    <a th:each="e : ${etiquetas}"
-                       th:href="@{/etiqueta/{nombre}(nombre=${e.nombre})}"
-                       class="badge bg-dark text-decoration-none p-2 m-1"
-                       th:text="${e.nombre}">
-                    </a>
-
-                    <p th:if="${#lists.isEmpty(etiquetas)}"
-                       class="text-muted small">
-                        No se encontraron etiquetas.
+        <!-- ===== TAB MIS INSCRIPCIONES ===== -->
+        <div class="tab-pane fade" id="inscritos" role="tabpanel">
+            <h3 class="mb-3">Mis Inscripciones</h3>
+            <p th:if="${#lists.isEmpty(eventosInscritos)}" class="text-muted">
+                No estás inscrito en ningún evento.
+            </p>
+            <div class="card mb-4 shadow-sm" th:each="a : ${eventosInscritos}">
+                <div class="card-body">
+                    <h2 class="card-title h4">
+                        <span th:text="${a.concepto}"></span>
+                        <span th:if="${a.estado != null and a.estado.name() == 'Cancelado'}"
+                              class="text-danger fw-bold ms-2" style="font-size:0.7em;">(Cancelado)</span>
+                    </h2>
+                    <p class="small text-muted">
+                        <span th:text="${#temporals.format(a.fechaEvento, 'dd/MM/yyyy HH:mm')}"></span>
+                        — <span class="badge"
+                                th:classappend="${a.estado.name() == 'Cancelado'} ? 'bg-danger' :
+                                               (${a.estado.name() == 'Concluido'} ? 'bg-secondary' :
+                                               (${a.estado.name() == 'EnProgreso'} ? 'bg-success' : 'bg-warning text-dark'))"
+                                th:text="${a.estado.name()}"></span>
                     </p>
-
+                    <p class="card-text"
+                       th:text="${#strings.abbreviate(#strings.arraySplit(a.descripcion, '|||')[0], 73)}"></p>
+                    <a th:href="@{/eventos/{id}(id=${a.id})}"
+                       class="btn btn-outline-primary btn-sm">Leer más</a>
                 </div>
+            </div>
+        </div>
 
+        <!-- ===== TAB MIS EVENTOS ===== -->
+        <div class="tab-pane fade" id="organizados" role="tabpanel">
+            <div class="d-flex justify-content-between align-items-center mb-3">
+                <h3>Mis Eventos</h3>
+                <a href="/eventos/" class="btn btn-sm btn-primary">Nuevo Evento</a>
+            </div>
+            <p th:if="${#lists.isEmpty(eventosOrganizados)}" class="text-muted">
+                No has organizado ningún evento.
+            </p>
+            <div class="card mb-4 shadow-sm" th:each="a : ${eventosOrganizados}">
+                <div class="card-body">
+                    <h2 class="card-title h4">
+                        <span th:text="${a.concepto}"></span>
+                        <span th:if="${a.estado != null and a.estado.name() == 'Cancelado'}"
+                              class="text-danger fw-bold ms-2" style="font-size:0.7em;">(Cancelado)</span>
+                    </h2>
+                    <p class="small text-muted">
+                        <span th:text="${#temporals.format(a.fechaEvento, 'dd/MM/yyyy HH:mm')}"></span>
+                        — <span class="badge"
+                                th:classappend="${a.estado.name() == 'Cancelado'} ? 'bg-danger' :
+                                               (${a.estado.name() == 'Concluido'} ? 'bg-secondary' :
+                                               (${a.estado.name() == 'EnProgreso'} ? 'bg-success' : 'bg-warning text-dark'))"
+                                th:text="${a.estado.name()}"></span>
+                    </p>
+                    <p class="card-text"
+                       th:text="${#strings.abbreviate(#strings.arraySplit(a.descripcion, '|||')[0], 73)}"></p>
+                    <a th:href="@{/eventos/{id}(id=${a.id})}"
+                       class="btn btn-outline-primary btn-sm">Leer más</a>
+                </div>
             </div>
         </div>
 

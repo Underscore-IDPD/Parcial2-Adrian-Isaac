@@ -22,7 +22,7 @@ public class Evento {
     @ManyToOne
     private Usuario organizador;
 
-    @OneToMany
+    @OneToMany(mappedBy = "evento")
     private List<Inscripcion> inscripciones = new ArrayList<>();
 
     private Estado estado;

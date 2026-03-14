@@ -9,6 +9,7 @@ import org.jetbrains.annotations.NotNull;
 import service.*;
 import util.Estado;
 import util.QRUtil;
+import util.Rol;
 
 import java.io.IOException;
 import java.time.LocalDate;
@@ -158,50 +159,58 @@ public class EventoControlador {
         if (paginaParam != null) {
             try {
                 pagina = Integer.parseInt(paginaParam);
-            } catch (NumberFormatException _) {
-            }
+            } catch (NumberFormatException _) {}
         }
 
+        String estadoFiltro = ctx.queryParam("estado");
+
         eventoServicio.sincronizarEstados(em);
-        List<Evento> eventos = eventoServicio.listarEventos(pagina, em);
+        List<Evento> eventos = eventoServicio.listarEventos(pagina, estadoFiltro, em);
 
         Long uid = ctx.sessionAttribute("usuarioId");
         Usuario actual = null;
+        List<Evento> eventosInscritos = List.of();
+        List<Evento> eventosOrganizados = List.of();
 
         if (uid != null) {
             actual = usuarioServicio.buscarPorId(uid, em);
+            eventosInscritos = eventoServicio.listarPorInscripcion(uid, em);
+            if (actual != null && actual.getRol() != Rol.Participante) {
+                eventosOrganizados = eventoServicio.listarPorOrganizador(uid, em);
+            }
         }
 
         List<Usuario> usuarioList = usuarioServicio.listar(em);
 
-        long totalEventos = eventoServicio.totalEventos(em);
+        long totalEventos = eventoServicio.totalEventos(estadoFiltro, em);
         int totalPaginas = (int) Math.ceil((double) totalEventos / 5);
 
         int maxBotones = 5;
         int inicioRango = Math.max(0, pagina - maxBotones / 2);
         int finRango = Math.min(totalPaginas - 1, inicioRango + maxBotones - 1);
-
-
         if (finRango - inicioRango + 1 < maxBotones) {
             inicioRango = Math.max(0, finRango - maxBotones + 1);
         }
 
         Map<Long, Usuario> mapaUsuarios = new HashMap<>();
-        for(Usuario u : usuarioList){
+        for (Usuario u : usuarioList) {
             mapaUsuarios.put(u.getId(), u);
         }
 
         Map<String, Object> modelo = new HashMap<>();
         modelo.put("eventos", eventos);
-        modelo.put("usuario",actual);
-        modelo.put("usuarios",mapaUsuarios);
+        modelo.put("usuario", actual);
+        modelo.put("usuarios", mapaUsuarios);
         modelo.put("etiquetas", eventoServicio.listarEtiquetas(em));
         modelo.put("paginaActual", pagina);
         modelo.put("totalPaginas", totalPaginas);
         modelo.put("inicioRango", inicioRango);
         modelo.put("finRango", finRango);
+        modelo.put("estadoFiltro", estadoFiltro != null ? estadoFiltro : "");
+        modelo.put("eventosInscritos", eventosInscritos);
+        modelo.put("eventosOrganizados", eventosOrganizados);
 
-        ctx.render("templates/index.html",modelo);
+        ctx.render("templates/index.html", modelo);
     }
 
     private void crearEventoVisual(Context ctx) {

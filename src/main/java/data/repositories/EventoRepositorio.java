@@ -151,4 +151,28 @@ public class EventoRepositorio extends BaseRepositorio {
                 .setParameter("idEvento", id)
                 .getResultList();
     }
+
+    public List<Evento> listarPorInscripcion(Long uid, EntityManager em) {
+        return em.createQuery(
+                        "SELECT e FROM Evento e JOIN e.inscripciones i WHERE i.usuario.id = :uid", Evento.class)
+                .setParameter("uid", uid)
+                .getResultList();
+    }
+
+    public List<Evento> listarPorOrganizador(Long uid, EntityManager em) {
+        return em.createQuery(
+                        "SELECT e FROM Evento e WHERE e.organizador.id = :uid", Evento.class)
+                .setParameter("uid", uid)
+                .getResultList();
+    }
+
+    public List<Evento> listarPaginado(int pagina, Estado estado, EntityManager em) {
+        assert em != null;
+        return em.createQuery(
+                        "SELECT e FROM Evento e WHERE e.estado = :estado ORDER BY e.fechaEvento DESC", Evento.class)
+                .setFirstResult(pagina * 5)
+                .setParameter("estado",estado)
+                .setMaxResults(5)
+                .getResultList();
+    }
 }

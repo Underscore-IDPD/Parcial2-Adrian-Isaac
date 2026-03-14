@@ -52,8 +52,20 @@ public class EventoServicio {
         return eventoRepositorio.listarPaginado(pagina, em);
     }
 
+    public List<Evento> listarEventos(int pagina, String estado, EntityManager em) {
+        if(estado == null || estado.isEmpty()) return eventoRepositorio.listarPaginado(pagina, em);
+        return eventoRepositorio.listarPaginado(pagina, Estado.valueOf(estado), em);
+    }
+
     public Long totalEventos(EntityManager em) {
         return em.createQuery("SELECT COUNT(e) FROM Evento e", Long.class)
+                .getSingleResult();
+    }
+
+    public Long totalEventos(String estado, EntityManager em) {
+        if(estado == null || estado.isEmpty()) return totalEventos(em);
+        return em.createQuery("SELECT COUNT(e) FROM Evento e WHERE e.estado = :estado", Long.class)
+                .setParameter("estado",Estado.valueOf(estado))
                 .getSingleResult();
     }
 
@@ -201,6 +213,16 @@ public class EventoServicio {
         return eventoRepositorio.listar(em);
     }
 
+    public List<Evento> listarTodos(String estadoFiltro, EntityManager em) {
+        if (estadoFiltro == null || estadoFiltro.isBlank()) {
+            return eventoRepositorio.listar(em);
+        }
+        return em.createQuery(
+                        "SELECT e FROM Evento e WHERE e.estado = :estado", Evento.class)
+                .setParameter("estado", Estado.valueOf(estadoFiltro))
+                .getResultList();
+    }
+
     public void desinscribirUsuario(Evento evento, Usuario usuario, EntityManager em) {
         em.getTransaction().begin();
         eventoRepositorio.desinscribir(usuario.getId(),evento.getId(),em);
@@ -209,5 +231,13 @@ public class EventoServicio {
 
     public List<Inscripcion> listaInscritos(long id, EntityManager em){
         return  eventoRepositorio.listarInscripciones(id,em);
+    }
+
+    public List<Evento> listarPorInscripcion(Long uid, EntityManager em) {
+        return eventoRepositorio.listarPorInscripcion(uid,em);
+    }
+
+    public List<Evento> listarPorOrganizador(Long uid, EntityManager em) {
+        return eventoRepositorio.listarPorOrganizador(uid,em);
     }
 }
