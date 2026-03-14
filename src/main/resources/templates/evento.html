@@ -137,13 +137,13 @@
 
                     <div class="mb-3 d-flex gap-2">
 
-                        <a th:if="${puedeEditar and evento.estado.name() != 'Cancelado'}"
+                        <a th:if="${puedeEditar and evento.estado.name() == 'Pendiente'}"
                            th:href="@{/eventos/{id}/edit(id=${evento.id})}"
                            class="btn btn-outline-primary btn-sm">
                             Editar evento
                         </a>
 
-                        <form th:if="${puedeCancelar and evento.estado.name() != 'Cancelado'}"
+                        <form th:if="${puedeCancelar and evento.estado.name() == 'Pendiente'}"
                               th:action="@{/eventos/{id}/cancel(id=${evento.id})}"
                               method="post">
 
@@ -174,9 +174,23 @@
                         <!-- ========= INFO EVENTO ========= -->
                         <div class="col-md-8 d-flex flex-column">
 
-                            <p class="mt-3"
-                               th:text="${evento.descripcion}">
-                            </p>
+                            <div th:with="textosSeparados=${#strings.arraySplit(evento.descripcion, '|||')}">
+
+                                <p class="card-text mb-3" th:text="${textosSeparados[0]}"></p>
+
+                                <div th:if="${evento.estado.name() == 'Cancelado'}"
+                                     class="alert alert-danger py-2 px-3 mb-3" role="alert" style="font-size: 0.9em;">
+
+                                    <i class="bi bi-exclamation-triangle-fill me-2"></i>
+                                    <strong>Cancelado por:</strong>
+
+                                    <span th:if="${#arrays.length(textosSeparados) > 1}" th:text="${textosSeparados[1]}">
+                                        Explicacion
+                                    </span>
+
+                                </div>
+
+                            </div>
 
                             <div class="mt-auto pt-3">
                                 <span th:each="e : ${evento.etiquetas}"
@@ -207,7 +221,7 @@
 
                             <form th:if="${usuario != null && !estaInscrito &&
                                           inscritos < evento.cupoMaximo &&
-                                          !evento.termino}"
+                                          !evento.termino && evento.estado.name() == 'Pendiente'}"
                                   th:action="@{/eventos/{id}/inscribirse(id=${evento.id})}"
                                   method="post">
 

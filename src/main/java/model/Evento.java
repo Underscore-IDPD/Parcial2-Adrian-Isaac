@@ -136,7 +136,7 @@ public class Evento {
 
     public void cancelarEvento(String razon){
         this.estado = Estado.Cancelado;
-        this.descripcion = razon;
+        this.descripcion = this.descripcion + "|||" + razon;
         this.fechaModificacion = LocalDateTime.now();
     }
 
