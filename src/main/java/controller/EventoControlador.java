@@ -5,6 +5,7 @@ import io.javalin.http.Context;
 import io.javalin.http.UploadedFile;
 import jakarta.persistence.EntityManager;
 import model.*;
+import org.jetbrains.annotations.NotNull;
 import service.*;
 import util.Estado;
 import util.QRUtil;
@@ -52,11 +53,69 @@ public class EventoControlador {
 
         app.routes.post("/eventos/{id}/inscribirse", this::inscribirEvento);
 
+        app.routes.post("/eventos/{id}/desinscribirse", this::desinscribirEvento);
+
+        app.routes.get("/eventos/{id}/checkIn", this::checkInOrganizador);
+
         app.routes.get("/etiqueta/{nombre}", this::filtrarPorEtiqueta);
 
-        app.routes.get("/checkIn/{token}", this::checkIn);
+        app.routes.get("/eventos/{id}/checkIn/{token}", this::checkIn);
 
+    }
 
+    private void desinscribirEvento(Context ctx) {
+
+        EntityManager em = ctx.attribute("em");
+
+        Long eventoId = Long.parseLong(ctx.pathParam("id"));
+
+        eventoServicio.sincronizarEstados(em);
+        Evento evento = eventoServicio.buscarPorId(eventoId, em);
+
+        if(evento == null){
+            ctx.status(404);
+            return;
+        }
+
+        Long usuarioId = ctx.sessionAttribute("usuarioId");
+
+        if(usuarioId == null){
+            ctx.redirect("/login");
+            return;
+        }
+
+        Usuario usuario = usuarioServicio.buscarPorId(usuarioId, em);
+
+        eventoServicio.desinscribirUsuario(evento, usuario, em);
+
+        ctx.redirect("/eventos/"+ctx.pathParam("id"));
+    }
+
+    private void checkInOrganizador(Context ctx) {
+
+        EntityManager em = ctx.attribute("em");
+
+        eventoServicio.sincronizarEstados(em);
+
+        long id = Long.parseLong(ctx.pathParam("id"));
+
+        Evento e = eventoServicio.buscarPorId(id, em);
+
+        if (e == null) {
+            ctx.status(404);
+            return;
+        }
+
+        if (!authServicio.esCreador(ctx, e)) {
+            ctx.status(403);
+            return;
+        }
+
+        Map<String, Object> modelo = new HashMap<>();
+
+        modelo.put("evento", e);
+
+        ctx.render("templates/checkin-organizador.html", modelo);
     }
 
     private void checkIn(Context ctx) {
@@ -64,6 +123,11 @@ public class EventoControlador {
 
         String token = ctx.pathParam("token");
 
+        String eidS = ctx.pathParam("id");
+
+        Long eid = Long.parseLong(eidS);
+
+        eventoServicio.sincronizarEstados(em);
         Evento e = eventoServicio.buscarPorInscripcion(token,em);
 
         if(e == null){
@@ -71,13 +135,8 @@ public class EventoControlador {
             return;
         }
 
-        if(!authServicio.esCreador(ctx,e)){
+        if(!authServicio.esCreador(ctx,e) || !Objects.equals(e.getId(), eventoServicio.buscarPorId(eid, em).getId())){
             ctx.status(403);
-            return;
-        }
-
-        if(e.termino()){
-            ctx.status(400);
             return;
         }
 
@@ -103,6 +162,7 @@ public class EventoControlador {
             }
         }
 
+        eventoServicio.sincronizarEstados(em);
         List<Evento> eventos = eventoServicio.listarEventos(pagina, em);
 
         Long uid = ctx.sessionAttribute("usuarioId");
@@ -177,6 +237,11 @@ public class EventoControlador {
         modelo.put("errormsg", errormsg);
         modelo.put("evento", null);
 
+        List<Evento> ls = eventoServicio.listarTodos(em);
+        ls.removeIf(e->e.getEstado().equals(Estado.Cancelado));
+
+        modelo.put("eventosExistentes",ls);
+
         modelo.put("lugares",
                 lugarServicio.listar(em));
 
@@ -221,6 +286,11 @@ public class EventoControlador {
         modelo.put("etiquetasTexto", etiquetasTexto);
         modelo.put("lugares", lugarServicio.listar(em));
 
+        List<Evento> eventosLs = eventoServicio.listarTodos(em);
+        eventosLs.removeIf(ev -> ev.getId().equals(e.getId()));
+        eventosLs.removeIf(ev->ev.getEstado().equals(Estado.Cancelado));
+        modelo.put("eventosExistentes",eventosLs);
+
         ctx.render("templates/form-evento.html", modelo);
     }
 
@@ -259,6 +329,8 @@ public class EventoControlador {
         EntityManager em = ctx.attribute("em");
 
         long id = Long.parseLong(ctx.pathParam("id"));
+
+        eventoServicio.sincronizarEstados(em);
         Evento e = eventoServicio.buscarPorId(id, em);
 
         if (e == null) {
@@ -327,9 +399,13 @@ public class EventoControlador {
 
         int cuposDisponibles = e.getCupoMaximo() - totalInscritos;
 
-        boolean estaInscrito = uid == null ? false : eventoServicio.estaInscrito(uid,id,em);
+        boolean estaInscrito = uid != null && eventoServicio.estaInscrito(uid, id, em);
 
+        boolean asistio = uid != null && eventoServicio.verificarAsistencia(uid,id,em);
+
+        modelo.put("estaInscrito", estaInscrito);
         modelo.put("evento", e);
+        modelo.put("asistio",asistio);
         modelo.put("organizador", organizador);
         modelo.put("comentarios", comentarios);
         modelo.put("usuarios", mapaUsuarios);
@@ -520,6 +596,8 @@ public class EventoControlador {
         EntityManager em = ctx.attribute("em");
 
         Long eventoId = Long.parseLong(ctx.pathParam("id"));
+
+        eventoServicio.sincronizarEstados(em);
         Evento evento = eventoServicio.buscarPorId(eventoId, em);
 
         if(evento == null){

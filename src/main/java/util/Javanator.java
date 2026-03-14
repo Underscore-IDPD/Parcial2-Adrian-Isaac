@@ -18,7 +18,7 @@ public class Javanator {
 
             System.out.println("H2 TCP Server iniciado.");
 
-            emf = Persistence.createEntityManagerFactory("blogPU");
+            emf = Persistence.createEntityManagerFactory("eventPU");
 
             System.out.println("EMF creado.");
 

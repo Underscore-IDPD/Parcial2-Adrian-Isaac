@@ -143,6 +143,12 @@
                             Editar evento
                         </a>
 
+                        <a th:if="${puedeEditar and evento.estado.name() == 'En_Transcurso'}"
+                           th:href="@{/eventos/{id}/checkIn(id=${evento.id})}"
+                           class="btn btn-outline-primary btn-sm">
+                            Registrar Asistencias
+                        </a>
+
                         <form th:if="${puedeCancelar and evento.estado.name() == 'Pendiente'}"
                               th:action="@{/eventos/{id}/cancel(id=${evento.id})}"
                               method="post">
@@ -213,15 +219,28 @@
                                 th:text="|Ubicación: ${evento.lugar.nombre}|">
                             </h6>
 
-                            <button th:if="${estaInscrito}"
-                                    class="btn btn-secondary btn-sm w-100 mt-3"
+                            <button th:if="${usuario != null && estaInscrito && asistio}"
+                                    class="btn btn-danger btn-sm w-100 mt-3"
                                     disabled>
-                                Ya inscrito
+                                Ya asistio
                             </button>
 
-                            <form th:if="${usuario != null && !estaInscrito &&
+                            <form th:if="${usuario != null && estaInscrito && !asistio && !puedeEditar &&
+                                          !evento.termino && (evento.estado.name() == 'Pendiente' || evento.estado.name() == 'En_Transcurso')}"
+                                  th:action="@{/eventos/{id}/desinscribirse(id=${evento.id})}"
+                                  method="post">
+
+                                <button class="btn btn-danger btn-sm w-100 mt-3">
+                                    Desinscribirme
+                                </button>
+
+                            </form>
+
+
+
+                            <form th:if="${usuario != null && !estaInscrito && !puedeEditar &&
                                           inscritos < evento.cupoMaximo &&
-                                          !evento.termino && evento.estado.name() == 'Pendiente'}"
+                                          !evento.termino && (evento.estado.name() == 'Pendiente' || evento.estado.name() == 'En_Transcurso')}"
                                   th:action="@{/eventos/{id}/inscribirse(id=${evento.id})}"
                                   method="post">
 
