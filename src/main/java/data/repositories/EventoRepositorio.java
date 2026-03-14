@@ -2,6 +2,7 @@ package data.repositories;
 
 import jakarta.persistence.*;
 import model.Evento;
+import model.Inscripcion;
 
 import java.util.List;
 
@@ -23,6 +24,20 @@ public class EventoRepositorio extends BaseRepositorio {
                 .setMaxResults(5)
                 .getResultList();
 
+    }
+
+    public Inscripcion buscarInscripcionPorToken(String token, EntityManager em){
+        TypedQuery<Inscripcion> query = em.createQuery(
+                        "SELECT i FROM Inscripcion i WHERE i.token = :token ", Inscripcion.class)
+                .setParameter("token", token);
+        List<Inscripcion> resultados = query.getResultList();
+        return resultados.isEmpty() ? null : resultados.getFirst();
+    }
+
+    public int contarInscritos(Long id, EntityManager em){
+        return em.createQuery(
+                        "SELECT COUNT i FROM Inscripcion i WHERE i.evento.id = :id ", Inscripcion.class)
+                .setParameter("id", id).getFirstResult();
     }
 
     public Evento buscarPorConceptoYOrganizador(String concepto, Long uid, EntityManager em) {
@@ -57,4 +72,11 @@ public class EventoRepositorio extends BaseRepositorio {
                 .getResultList();
     }
 
+    public boolean verificarInscripcion(Long uid, long id, EntityManager em) {
+        return em.createQuery(
+                        "SELECT COUNT i FROM Inscripcion i WHERE i.evento.id = :id AND i.usuario = uid ", Inscripcion.class)
+                .setParameter("id", id)
+                .setParameter("uid",uid)
+                .getFirstResult() == 1;
+    }
 }

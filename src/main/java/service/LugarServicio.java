@@ -72,6 +72,17 @@ public class LugarServicio {
         em.getTransaction().commit();
     }
 
+    public void activarLugar(long id, EntityManager em){
+        Lugar l = lugarRepositorio.buscarPorId(id, em);
+        if (l == null) {
+            throw new RuntimeException("Lugar no encontrado");
+        }
+        l.activar();
+        em.getTransaction().begin();
+        lugarRepositorio.actualizar(l,em);
+        em.getTransaction().commit();
+    }
+
     public void eliminarLugar(long id, EntityManager em) {
         try {
             Lugar u = lugarRepositorio.buscarPorId(id, em);

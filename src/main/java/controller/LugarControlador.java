@@ -49,6 +49,8 @@ public class LugarControlador {
 
         app.routes.post("/lugares/{id}/deactivate", this::desactivarLugar);
 
+        app.routes.post("/lugares/{id}/activate", this::activarLugar);
+
     }
 
     private void listarLugares(Context ctx){
@@ -206,6 +208,26 @@ public class LugarControlador {
         lugarServicio.desactivarLugar(l.getId(), em);
 
         ctx.redirect("/");
+    }
+
+    private void activarLugar(Context ctx) {
+
+        EntityManager em = ctx.attribute("em");
+        Lugar l = lugarServicio.buscarPorId(Long.parseLong(ctx.pathParam("id")), em);
+
+        if(l == null){
+            ctx.status(404);
+            return;
+        }
+
+        if(!authServicio.esAdmin(ctx)){
+            ctx.status(403);
+            return;
+        }
+
+        lugarServicio.activarLugar(l.getId(), em);
+
+        ctx.redirect("/lugares");
     }
 
     private void modificarLugar(Context ctx) {
