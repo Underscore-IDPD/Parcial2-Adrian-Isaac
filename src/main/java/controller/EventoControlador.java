@@ -526,6 +526,11 @@ public class EventoControlador {
 
         long id = Long.parseLong(ctx.pathParam("id"));
 
+        if(eventoServicio.buscarPorId(id,em).getEstado().equals(Estado.En_Transcurso)){
+            ctx.status(400);
+            return;
+        }
+
         eventoServicio.eliminarEvento(id, em);
 
         ctx.redirect("/");
@@ -547,6 +552,11 @@ public class EventoControlador {
         }
 
         long id = Long.parseLong(ctx.pathParam("id"));
+
+        if(!eventoServicio.buscarPorId(id,em).getEstado().equals(Estado.Pendiente)){
+            ctx.status(400);
+            return;
+        }
 
         String razon = ctx.formParam("razon");
 

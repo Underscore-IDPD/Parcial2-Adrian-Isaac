@@ -161,7 +161,7 @@
 
                         </form>
 
-                        <form th:if="${puedeEliminar}"
+                        <form th:if="${puedeEliminar && evento.estado.name() != 'En_Transcurso'}"
                               th:action="@{/eventos/{id}/delete(id=${evento.id})}"
                               method="post">
 
