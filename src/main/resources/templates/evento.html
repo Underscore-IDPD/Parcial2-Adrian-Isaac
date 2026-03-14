@@ -137,13 +137,19 @@
 
                     <div class="mb-3 d-flex gap-2">
 
-                        <a th:if="${puedeEditar and evento.estado.name() != 'Cancelado'}"
+                        <a th:if="${puedeEditar and evento.estado.name() == 'Pendiente'}"
                            th:href="@{/eventos/{id}/edit(id=${evento.id})}"
                            class="btn btn-outline-primary btn-sm">
                             Editar evento
                         </a>
 
-                        <form th:if="${puedeCancelar and evento.estado.name() != 'Cancelado'}"
+                        <a th:if="${puedeEditar and evento.estado.name() == 'En_Transcurso'}"
+                           th:href="@{/eventos/{id}/checkIn(id=${evento.id})}"
+                           class="btn btn-outline-primary btn-sm">
+                            Registrar Asistencias
+                        </a>
+
+                        <form th:if="${puedeCancelar and evento.estado.name() == 'Pendiente'}"
                               th:action="@{/eventos/{id}/cancel(id=${evento.id})}"
                               method="post">
 
@@ -174,9 +180,23 @@
                         <!-- ========= INFO EVENTO ========= -->
                         <div class="col-md-8 d-flex flex-column">
 
-                            <p class="mt-3"
-                               th:text="${evento.descripcion}">
-                            </p>
+                            <div th:with="textosSeparados=${#strings.arraySplit(evento.descripcion, '|||')}">
+
+                                <p class="card-text mb-3" th:text="${textosSeparados[0]}"></p>
+
+                                <div th:if="${evento.estado.name() == 'Cancelado'}"
+                                     class="alert alert-danger py-2 px-3 mb-3" role="alert" style="font-size: 0.9em;">
+
+                                    <i class="bi bi-exclamation-triangle-fill me-2"></i>
+                                    <strong>Cancelado por:</strong>
+
+                                    <span th:if="${#arrays.length(textosSeparados) > 1}" th:text="${textosSeparados[1]}">
+                                        Explicacion
+                                    </span>
+
+                                </div>
+
+                            </div>
 
                             <div class="mt-auto pt-3">
                                 <span th:each="e : ${evento.etiquetas}"
@@ -199,15 +219,28 @@
                                 th:text="|Ubicación: ${evento.lugar.nombre}|">
                             </h6>
 
-                            <button th:if="${estaInscrito}"
-                                    class="btn btn-secondary btn-sm w-100 mt-3"
+                            <button th:if="${usuario != null && estaInscrito && asistio}"
+                                    class="btn btn-danger btn-sm w-100 mt-3"
                                     disabled>
-                                Ya inscrito
+                                Ya asistio
                             </button>
 
-                            <form th:if="${usuario != null && !estaInscrito &&
+                            <form th:if="${usuario != null && estaInscrito && !asistio && !puedeEditar &&
+                                          !evento.termino && (evento.estado.name() == 'Pendiente' || evento.estado.name() == 'En_Transcurso')}"
+                                  th:action="@{/eventos/{id}/desinscribirse(id=${evento.id})}"
+                                  method="post">
+
+                                <button class="btn btn-danger btn-sm w-100 mt-3">
+                                    Desinscribirme
+                                </button>
+
+                            </form>
+
+
+
+                            <form th:if="${usuario != null && !estaInscrito && !puedeEditar &&
                                           inscritos < evento.cupoMaximo &&
-                                          !evento.termino}"
+                                          !evento.termino && (evento.estado.name() == 'Pendiente' || evento.estado.name() == 'En_Transcurso')}"
                                   th:action="@{/eventos/{id}/inscribirse(id=${evento.id})}"
                                   method="post">
 
@@ -253,6 +286,62 @@
                             </div>
                         </div>
 
+                    </div>
+
+                </div>
+            </div>
+
+            <!-- ================= ESTADISTICAS ================= -->
+            <div class="card mb-4">
+                <div class="card-header bg-white fw-bold">
+                    <i class="bi bi-graph-up text-primary me-2"></i>Resumen y Estadísticas
+                </div>
+                <div class="card-body">
+
+                    <div class="row text-center mb-4">
+                        <div class="col-md-4 mb-3 mb-md-0">
+                            <div class="card border-primary h-100">
+                                <div class="card-body">
+                                    <h6 class="card-title text-muted mb-2">Total Inscritos</h6>
+                                    <h2 class="text-primary mb-0" th:text="${totalInscritos}">0</h2>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-4 mb-3 mb-md-0">
+                            <div class="card border-success h-100">
+                                <div class="card-body">
+                                    <h6 class="card-title text-muted mb-2">Total Asistentes</h6>
+                                    <h2 class="text-success mb-0" th:text="${totalAsistentes}">0</h2>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="card border-info h-100">
+                                <div class="card-body">
+                                    <h6 class="card-title text-muted mb-2">Porcentaje Asistencia</h6>
+                                    <h2 class="text-info mb-0" th:text="${porcentajeAsistencia} + '%'">0%</h2>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-6 mb-4 mb-md-0">
+                            <h6 class="text-center text-muted mb-3">Inscripciones por día</h6>
+
+                            <div style="position: relative; height: 250px; width: 100%;">
+                                <canvas id="graficoInscripciones"></canvas>
+                            </div>
+
+                        </div>
+                        <div class="col-md-6">
+                            <h6 class="text-center text-muted mb-3">Asistencia por hora</h6>
+
+                            <div style="position: relative; height: 250px; width: 100%;">
+                                <canvas id="graficoAsistencia"></canvas>
+                            </div>
+
+                        </div>
                     </div>
 
                 </div>
@@ -342,6 +431,77 @@
             alert("Debes ingresar una razón para cancelar el evento")
         }
     }
+</script>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+<script th:inline="javascript">
+    document.addEventListener("DOMContentLoaded", function() {
+
+        // Valores por defecto (No representan nada)
+        const labelsDias = /*[[${labelsDias}]]*/ ['Lun', 'Mar', 'Mie', 'Jue', 'Vie', 'Sab', 'Dom'];
+        const datosInscritos = /*[[${datosInscritos}]]*/ [0, 0, 0, 0, 0, 0, 0];
+
+        const labelsHoras = /*[[${labelsHoras}]]*/ ['08:00', '09:00', '10:00', '11:00'];
+        const datosAsistencia = /*[[${datosAsistencia}]]*/ [0, 0, 0, 0];
+
+        const ctxInscripciones = document.getElementById('graficoInscripciones').getContext('2d');
+        new Chart(ctxInscripciones, {
+            type: 'line',
+            data: {
+                labels: labelsDias,
+                datasets: [{
+                    label: 'Nuevos inscritos',
+                    data: datosInscritos,
+                    borderColor: '#0d6efd',
+                    backgroundColor: 'rgba(13, 110, 253, 0.1)',
+                    borderWidth: 2,
+                    fill: true,
+                    tension: 0.3
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        min: 0,
+                        ticks: {
+                            stepSize: 1
+                        }
+                    }
+                }
+            }
+        });
+
+        const ctxAsistencia = document.getElementById('graficoAsistencia').getContext('2d');
+        new Chart(ctxAsistencia, {
+            type: 'bar',
+            data: {
+                labels: labelsHoras,
+                datasets: [{
+                    label: 'Personas que asistieron',
+                    data: datosAsistencia,
+                    backgroundColor: '#198754',
+                    borderRadius: 4
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        min: 0,
+                        ticks: {
+                            stepSize: 1
+                        }
+                    }
+                }
+            }
+        });
+    });
 </script>
 </body>
 </html>

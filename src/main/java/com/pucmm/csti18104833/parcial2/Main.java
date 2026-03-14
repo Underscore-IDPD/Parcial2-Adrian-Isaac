@@ -24,6 +24,10 @@ import java.sql.SQLException;
 import java.time.LocalDateTime;
 import java.util.Base64;
 
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
+
 public class Main {
     static void main() throws SQLException {
 
@@ -126,7 +130,7 @@ public class Main {
             });
 
             config.routes.before("/eventos/*", ctx -> {
-                if(ctx.path().matches("/articulos/\\d+") || ctx.path().contains("/etiqueta/")) {
+                if(ctx.path().matches("/eventos/\\d+") || ctx.path().contains("/etiqueta/")) {
                     return;
                 }
 
@@ -135,7 +139,7 @@ public class Main {
                     return;
                 }
 
-                if(ctx.path().endsWith("/comentarios")) return;
+                if(ctx.path().endsWith("/comentarios") || ctx.path().contains("/inscribirse") || ctx.path().contains("/desinscribirse")) return;
 
                 if(!authServicio.esAdmin(ctx) && !authServicio.esAutor(ctx)) {
                     ctx.redirect("/");
@@ -147,12 +151,12 @@ public class Main {
             config.routes.before("/eventos/{id}/*", ctx ->{
                 if (authServicio.esAdmin(ctx) || ctx.path().endsWith("/comentarios") || ctx.path().contains("/etiqueta")) return;
 
-                long idArticulo = Long.parseLong(ctx.pathParam("id"));
+                long idEvento = Long.parseLong(ctx.pathParam("id"));
                 EntityManager em = ctx.attribute("em");
-                Evento art = eventoServicio.buscarPorId(idArticulo,em);
+                Evento e = eventoServicio.buscarPorId(idEvento,em);
                 Long idUsuario = ctx.sessionAttribute("usuarioId");
 
-                if (art != null && !art.getOrganizador().getId().equals(idUsuario)) {
+                if (e != null && !e.getOrganizador().getId().equals(idUsuario) && !ctx.path().contains("/inscribirse") && !ctx.path().contains("/desinscribirse")) {
                     ctx.redirect("/");
                 }
             });
@@ -189,6 +193,16 @@ public class Main {
         probarConexion();
 
         EntityManager em = Javanator.getEntityManager();
+
+        ScheduledExecutorService scheduler = Executors.newSingleThreadScheduledExecutor();
+
+        scheduler.scheduleAtFixedRate(() -> {
+            try {
+                eventoServicio.sincronizarEstados(em);
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        }, 0, 5, TimeUnit.MINUTES);
 
         usuarioServicio.crearUsuarioBase(em);
         lugarServicio.crearLugarBase(em);

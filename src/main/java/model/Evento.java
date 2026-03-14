@@ -5,15 +5,8 @@ import util.Estado;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.List;
 
-@Table(
-        name = "articulo",
-        uniqueConstraints = {
-                @UniqueConstraint(columnNames = {"titulo", "cuerpo"}),
-                @UniqueConstraint(columnNames = {"autor_id", "cuerpo"})}
-)
 
 @Entity
 public class Evento {
@@ -136,7 +129,7 @@ public class Evento {
 
     public void cancelarEvento(String razon){
         this.estado = Estado.Cancelado;
-        this.descripcion = razon;
+        this.descripcion = this.descripcion + "|||" + razon;
         this.fechaModificacion = LocalDateTime.now();
     }
 
