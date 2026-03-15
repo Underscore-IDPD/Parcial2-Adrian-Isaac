@@ -42,10 +42,20 @@ jar {
     }
 }
 
+tasks.withType(JavaCompile) {
+    options.compilerArgs += ["--enable-preview"]
+}
+
+tasks.withType(JavaExec) {
+    jvmArgs += ["--enable-preview"]
+}
 shadowJar {
     archiveBaseName.set('event')
     archiveClassifier.set('')
     archiveVersion.set('')
+    manifest {
+        attributes 'Main-Class': 'com.pucmm.csti18104833.parcial2.Main'
+    }
 }
 
 test {

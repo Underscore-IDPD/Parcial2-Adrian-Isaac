@@ -1,0 +1,3 @@
+eventodb.idpd.dev {
+    reverse_proxy localhost:7070
+}

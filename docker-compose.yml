@@ -1,8 +1,20 @@
 services:
-  app:
-    build: .
+  caddy:
+    image: caddy:2
     ports:
-      - "80:7070"
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile
+      - caddy-data:/data
+      - caddy-config:/config
+    depends_on:
+      - app
+    restart: unless-stopped
+  app:
+    image: isaac06/event:latest
+    ports:
+      - "8080:7070"
     volumes:
       - event-data:/data
     restart: unless-stopped

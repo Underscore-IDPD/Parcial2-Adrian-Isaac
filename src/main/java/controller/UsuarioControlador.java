@@ -6,10 +6,8 @@ import jakarta.persistence.EntityManager;
 import model.Usuario;
 import service.UsuarioServicio;
 import service.AuthServicio;
-import util.Cockroach;
 import util.Rol;
 
-import io.javalin.Javalin;
 import io.javalin.http.Context;
 
 import java.io.IOException;
@@ -62,7 +60,6 @@ public class UsuarioControlador {
         Usuario u = usuarioServicio.autenticar(username, password, em);
 
         if (u != null) {
-            Cockroach.registrarLogin(username);
             ctx.sessionAttribute("usuarioId", u.getId());
 
             String recordar = ctx.formParam("recordar");
@@ -75,7 +72,7 @@ public class UsuarioControlador {
             ctx.redirect("/");
 
         } else {
-            IO.println("Login Incorrecto");
+            System.out.println("Login Incorrecto");
             Map<String, Object> modelo = new HashMap<>();
             modelo.put("error",true);
             ctx.render("templates/login.html",modelo);
