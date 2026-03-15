@@ -107,17 +107,28 @@
                             Editar
                         </a>
 
-                        <form th:if="${l.activo}"
-                              th:action="@{/lugares/{id}/deactivate(id=${l.id})}"
-                              method="post"
-                              class="d-inline">
+                        <th:block th:with="enTranscurso=${!#lists.isEmpty(eventosTranscurso.?[lugar.id == l.id])}">
 
-                            <button type="submit"
-                                    class="btn btn-sm btn-outline-danger"
-                                    onclick="return confirm('¿Desactivar lugar? (Se quitará de todos sus eventos pendientes)');">
-                                Desactivar
-                            </button>
-                        </form>
+                            <form th:if="${l.activo and enTranscurso}"
+                                  class="d-inline">
+                                <button class="btn btn-sm btn-outline-danger" disabled
+                                        title="Hay un evento en transcurso en este lugar">
+                                    Desactivar
+                                </button>
+                            </form>
+
+                            <form th:if="${l.activo and !enTranscurso}"
+                                  th:action="@{/lugares/{id}/deactivate(id=${l.id})}"
+                                  method="post"
+                                  class="d-inline">
+                                <button type="submit"
+                                        class="btn btn-sm btn-outline-danger"
+                                        onclick="return confirm('¿Desactivar lugar?');">
+                                    Desactivar
+                                </button>
+                            </form>
+
+                        </th:block>
 
                         <form th:if="${!l.activo}"
                               th:action="@{/lugares/{id}/activate(id=${l.id})}"

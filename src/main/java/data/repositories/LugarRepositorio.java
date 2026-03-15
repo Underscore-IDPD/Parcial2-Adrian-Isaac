@@ -36,7 +36,7 @@ public class LugarRepositorio extends BaseRepositorio {
     public void desactivar(Long id, EntityManager em) {
         Lugar undefined = buscarPorId(0L,em);
 
-        em.createQuery("UPDATE Evento e SET e.lugar = :undefined WHERE e.lugar.id = :idLugar")
+        em.createQuery("UPDATE Evento e SET e.lugar = :undefined WHERE e.lugar.id = :idLugar AND e.estado = util.Estado.Pendiente")
                 .setParameter("idLugar", id)
                 .setParameter("undefined", undefined)
                 .executeUpdate();

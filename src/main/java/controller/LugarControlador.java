@@ -6,6 +6,7 @@ import io.javalin.http.UploadedFile;
 import jakarta.persistence.EntityManager;
 import model.*;
 import service.AuthServicio;
+import service.EventoServicio;
 import service.LugarServicio;
 import service.UsuarioServicio;
 
@@ -24,11 +25,13 @@ public class LugarControlador {
     private final LugarServicio lugarServicio;
     private final AuthServicio authServicio;
     private final UsuarioServicio usuarioServicio;
+    private final EventoServicio eventoServicio;
 
-    public LugarControlador(LugarServicio lugarServicio, AuthServicio authServicio, UsuarioServicio usuarioServicio) {
+    public LugarControlador(LugarServicio lugarServicio, AuthServicio authServicio, UsuarioServicio usuarioServicio, EventoServicio eventoServicio) {
         this.lugarServicio = lugarServicio;
         this.authServicio = authServicio;
         this.usuarioServicio = usuarioServicio;
+        this.eventoServicio = eventoServicio;
     }
 
     public void registrarRutas(JavalinConfig app) {
@@ -36,8 +39,6 @@ public class LugarControlador {
         app.routes.get("/lugares", this::listarLugares);
 
         app.routes.get("/lugares/crear", this::crearLugarVisual);
-
-        app.routes.get("/lugares/{id}", this::verLugar);
 
         app.routes.get("/lugares/{id}/edit", this::modificarLugarVisual);
 
@@ -56,14 +57,19 @@ public class LugarControlador {
     private void listarLugares(Context ctx){
         EntityManager em = ctx.attribute("em");
         Long uid = ctx.sessionAttribute("usuarioId");
-        Usuario usuario = usuarioServicio.buscarPorId(uid,em);
+        Usuario usuario = usuarioServicio.buscarPorId(uid, em);
 
         List<Lugar> lugares = lugarServicio.listar(em);
-        lugares.remove(lugarServicio.buscarPorId(0L,em));
+        lugares.remove(lugarServicio.buscarPorId(0L, em));
 
-        ctx.attribute("usuario",usuario);
-        ctx.attribute("lugares", lugares);
-        ctx.render("templates/lista-lugares.html");
+        List<Evento> eventosTranscurso = eventoServicio.listarTodos("En_Transcurso", em);
+
+        Map<String, Object> modelo = new HashMap<>();
+        modelo.put("usuario", usuario);
+        modelo.put("lugares", lugares);
+        modelo.put("eventosTranscurso", eventosTranscurso);
+
+        ctx.render("templates/lista-lugares.html", modelo);
     }
 
     private void crearLugarVisual(Context ctx) {
@@ -95,7 +101,6 @@ public class LugarControlador {
         HashMap<String,Object> modelo = new HashMap<>();
 
         modelo.put("usuarioActual", u);
-        //modelo.put("error", error);
         modelo.put("errormsg", errormsg);
         modelo.put("lugar", null);
 
@@ -135,12 +140,6 @@ public class LugarControlador {
 
         ctx.render("templates/form-lugar.html", modelo);
     }
-
-    private void verLugar(Context ctx) {
-        //TODO
-    }
-
-
 
     private void crearLugar(Context ctx) {
 
@@ -202,6 +201,12 @@ public class LugarControlador {
 
         if(!authServicio.esAdmin(ctx)){
             ctx.status(403);
+            return;
+        }
+
+        List <Evento> eventosTranscurso = eventoServicio.listarTodos("En_Transcurso",em);
+        if(eventosTranscurso.stream().anyMatch(ev -> (ev.getLugar().getId().equals(Long.parseLong(ctx.pathParam("id")))))){
+            ctx.status(400);
             return;
         }
 
@@ -288,6 +293,12 @@ public class LugarControlador {
         }
 
         long id = Long.parseLong(ctx.pathParam("id"));
+
+        List <Evento> eventosTranscurso = eventoServicio.listarTodos("En_Transcurso",em);
+        if(eventosTranscurso.stream().anyMatch(ev -> (ev.getLugar().getId().equals(id)))){
+            ctx.status(400);
+            return;
+        }
 
         try {
             lugarServicio.eliminarLugar(id, em);

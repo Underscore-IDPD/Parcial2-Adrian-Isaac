@@ -54,7 +54,7 @@ public class Main {
         ComentarioControlador comentarioControlador = new ComentarioControlador(
                 comentarioServicio, eventoServicio,authServicio,usuarioServicio
         );
-        LugarControlador lugarControlador = new LugarControlador(lugarServicio,authServicio,usuarioServicio);
+        LugarControlador lugarControlador = new LugarControlador(lugarServicio,authServicio,usuarioServicio,eventoServicio);
 
         var app = Javalin.create(config ->{
             config.jetty.modifyServletContextHandler(handler -> {
