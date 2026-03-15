@@ -14,10 +14,7 @@ import java.io.IOException;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
-import java.util.Base64;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.stream.Collectors;
 
 public class LugarControlador {
@@ -64,10 +61,20 @@ public class LugarControlador {
 
         List<Evento> eventosTranscurso = eventoServicio.listarTodos("En_Transcurso", em);
 
+        Set<Long> lugaresConEventos = new HashSet<>();
+
+        for(Lugar l: lugares) {
+            for (Evento e : eventosTranscurso) {
+                if (e.getLugar().getId().equals(l.getId())) lugaresConEventos.add(l.getId());
+            }
+        }
+
         Map<String, Object> modelo = new HashMap<>();
         modelo.put("usuario", usuario);
         modelo.put("lugares", lugares);
-        modelo.put("eventosTranscurso", eventosTranscurso);
+
+
+        modelo.put("lugaresConEventos", lugaresConEventos);
 
         ctx.render("templates/lista-lugares.html", modelo);
     }
