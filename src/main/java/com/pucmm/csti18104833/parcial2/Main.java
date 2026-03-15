@@ -241,7 +241,7 @@ public class Main {
                 em
         );
 
-        fotoBase64 = imagenBase64DesdeResources("default-banner.png");
+        fotoBase64 = imagenBase64DesdeResources("Vaadin.jpeg");
         tipoImagen = "image/jpg";
 
         es.crearEvento(
