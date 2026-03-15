@@ -72,7 +72,7 @@ public class EventoServicio {
     public Evento buscarPorId(long id, EntityManager em) {
         Evento ert = eventoRepositorio.buscarPorId(id, em);
         if (ert == null) {
-            IO.println("No se encontro el evento");
+            System.out.println("No se encontro el evento");
             throw new RuntimeException("Evento no encontrado");
         }
         return ert;

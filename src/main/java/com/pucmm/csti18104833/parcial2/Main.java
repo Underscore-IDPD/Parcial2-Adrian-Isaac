@@ -192,7 +192,6 @@ public class Main {
         });
 
         app.start(7070);
-        probarConexion();
 
         EntityManager em = Javanator.getEntityManager();
 
@@ -284,17 +283,6 @@ public class Main {
 
         } catch (Exception e) {
             if (em.getTransaction().isActive()) em.getTransaction().rollback();
-            e.printStackTrace();
-        }
-    }
-
-    public static void probarConexion() {
-        try (Connection conn =
-                     DriverManager.getConnection(System.getenv("JDBC_DATABASE_URL"))) {
-
-            System.out.println("Conexión exitosa a Cockroach!");
-
-        } catch (Exception e) {
             e.printStackTrace();
         }
     }
