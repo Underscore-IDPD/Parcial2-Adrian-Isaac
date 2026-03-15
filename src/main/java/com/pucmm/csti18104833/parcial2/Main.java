@@ -248,10 +248,10 @@ public class Main {
                 "Charla sobre Vaadin",
                 "Vaadin es lo mejor",
                 60,
-                60,
+                240,
                 admin,
                 ls.buscarPorId(1L,em),
-                LocalDateTime.of(2026,3,3,8,30,0),
+                LocalDateTime.of(2026,3,3,8,0,0),
                 "vaadin, java",
                 fotoBase64, tipoImagen,
                 em
@@ -273,8 +273,10 @@ public class Main {
                 if (random.nextInt(100) < 80) {
                     inscripcion.marcarAsistio();
 
-                    int minutosVariacion = random.nextInt(120) - 60;
-                    inscripcion.setFechaAsistencia(evento.getFechaEvento().plusMinutes(minutosVariacion));
+                    int duracion = evento.getDuracionMinutos();
+
+                    int minutoDeLlegada = random.nextInt(duracion);
+                    inscripcion.setFechaAsistencia(evento.getFechaEvento().plusMinutes(minutoDeLlegada));
                 }
 
                 em.persist(inscripcion);
